@@ -23,7 +23,7 @@
 #define HANDLE_STAT_AND_RET(stat,returndata) { if(returndata==RET_INVALID_CMD||returndata==RET_INVALID_PARAM) return SM_ERR_PARAMETER; if(stat!=SM_OK) return (stat); }
 
 int smNumDevices=0;//number of physical devices connected to PC (TTL232R adapters or USB7AXes etc)
-smbool quiet=smfalse, ignorecrc=smfalse;
+smbool quiet=smtrue, ignorecrc=smfalse;
 SM_DEVICE smDevice[SM_MAX_DEVICES];
 
 
