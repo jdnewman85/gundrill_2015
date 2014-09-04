@@ -1,6 +1,6 @@
-#include "SimpleMotion_lib/simplemotion.h"
-#include "SimpleMotion_lib/simplemotion_private.h"
-#include "SimpleMotion_lib/vsd_cmd.h"
+#include "SimpleMotion/simplemotion.h"
+#include "SimpleMotion/simplemotion_private.h"
+#include "SimpleMotion/vsd_cmd.h"
 #include "time.h"
 #include "stdio.h"
 
