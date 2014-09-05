@@ -112,7 +112,7 @@ void createDisplay() {
 	//Position Frame
 	GtkWidget* positionFrame;
 	positionFrame = gtk_frame_new(NULL);
-	gtk_grid_attach(GTK_GRID(grid), positionFrame, 0, 0, 8, 1);
+	gtk_grid_attach(GTK_GRID(grid), positionFrame, 0, 0, 9, 1);
 	gtk_widget_set_hexpand(positionFrame, TRUE);
 	//Position Frame Label
 	GtkWidget* positionFrameLabel;
@@ -129,7 +129,7 @@ void createDisplay() {
 	//Target Frame
 	GtkWidget* targetFrame;
 	targetFrame = gtk_frame_new(NULL);
-	gtk_grid_attach(GTK_GRID(grid), targetFrame, 1, 1, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), targetFrame, 1, 1, 3, 1);
 	gtk_widget_set_hexpand(targetFrame, TRUE);
 	//Target Frame Label
 	GtkWidget* targetFrameLabel;
@@ -145,7 +145,7 @@ void createDisplay() {
 	//ToGo Frame
 	GtkWidget* toGoFrame;
 	toGoFrame = gtk_frame_new(NULL);
-	gtk_grid_attach(GTK_GRID(grid), toGoFrame, 5, 1, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), toGoFrame, 5, 1, 3, 1);
 	gtk_widget_set_hexpand(toGoFrame, TRUE);
 	//ToGo Frame Label
 	GtkWidget* toGoFrameLabel;
@@ -161,7 +161,7 @@ void createDisplay() {
 	//Feedrate Frame
 	GtkWidget* feedrateFrame;
 	feedrateFrame = gtk_frame_new(NULL);
-	gtk_grid_attach(GTK_GRID(grid), feedrateFrame, 1, 2, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), feedrateFrame, 1, 2, 3, 1);
 	gtk_widget_set_hexpand(feedrateFrame, TRUE);
 	//Feedrate Frame Label
 	GtkWidget* feedrateFrameLabel;
@@ -186,7 +186,7 @@ void createDisplay() {
 	//Spindle Frame
 	GtkWidget* spindleFrame;
 	spindleFrame = gtk_frame_new(NULL);
-	gtk_grid_attach(GTK_GRID(grid), spindleFrame, 5, 2, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), spindleFrame, 5, 2, 3, 1);
 	gtk_widget_set_hexpand(spindleFrame, TRUE);
 	//Spindle Frame Label
 	GtkWidget* spindleFrameLabel;
