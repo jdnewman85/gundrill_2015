@@ -94,13 +94,13 @@ void createDisplay() {
 	//Frame
 	GtkWidget* frame;
 	frame = gtk_frame_new(NULL);
-	gtk_frame_set_label_align(GTK_FRAME(frame), 1.0, 1.0);
+	gtk_frame_set_label_align(GTK_FRAME(frame), 1.0, 0.5);
 	gtk_container_add(GTK_CONTAINER(window), frame);
 
 	//Frame Label
 	GtkWidget* frameLabel;
 	frameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(frameLabel), "<span font='30' color='#ffffff'>Testers - Gun Drill</span>");
+	gtk_label_set_markup(GTK_LABEL(frameLabel), "<span font='15' color='#ffffff'>Testers - Gun Drill</span>");
 	gtk_frame_set_label_widget(GTK_FRAME(frame), frameLabel);
 
 	//Grid
