@@ -15,7 +15,9 @@ add_definitions(${GTK_CFLAGS_OTHER})
 file(GLOB SIMPLEMOTION_SOURCES ${GUNDRILL_SOURCE_DIR}/lib/SimpleMotion/*.c)
 add_library(SimpleMotion ${SIMPLEMOTION_SOURCES})
 
-add_executable(a.out ${GUNDRILL_SOURCE_DIR}/src/main.c)
+file(GLOB SOURCES ${GUNDRILL_SOURCE_DIR}/src/*.c)
+
+add_executable(a.out ${SOURCES})
 
 target_link_libraries(a.out SimpleMotion ftd2xx ${GLIB_PKG_LIBRARIES} ${GTK3_LIBRARIES})
 
