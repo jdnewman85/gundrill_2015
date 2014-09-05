@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <signal.h>
 
-#include <gtk-3.0/gtk/gtk.h>
+#include <gtk/gtk.h>
 
 #include "SimpleMotion/simplemotion.h"
 #include "SimpleMotion/simplemotion_private.h"
@@ -209,12 +209,23 @@ void createDisplay() {
 	gtk_label_set_markup(GTK_LABEL(spindleOverride), "<span weight='bold' font='30' color='#ffffff'>100%</span>");
 	gtk_box_pack_start(GTK_BOX(spindleBox), spindleOverride, TRUE, TRUE, 0);
 
-	//StatusBar
-	GtkWidget* statusBar;
-	statusBar = gtk_statusbar_new();
-	gtk_grid_attach(GTK_GRID(grid), statusBar, 0, 3, 9, 1);
-	gtk_widget_set_valign(statusBar, GTK_ALIGN_END);
-	gtk_widget_set_vexpand(statusBar, TRUE);
+	//Status Frame
+	GtkWidget* statusFrame;
+	statusFrame = gtk_frame_new(NULL);
+	gtk_grid_attach(GTK_GRID(grid), statusFrame, 0, 3, 9, 1);
+	gtk_widget_set_hexpand(statusFrame, TRUE);
+	gtk_widget_set_valign(statusFrame, GTK_ALIGN_BASELINE);
+	//Status Frame Label
+	GtkWidget* statusFrameLabel;
+	statusFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(statusFrameLabel), "<span font='15' color='#ffffff'>Status</span>");
+	gtk_frame_set_label_widget(GTK_FRAME(statusFrame), statusFrameLabel);
+	//Status Display
+	GtkWidget* statusDisplay;
+	statusDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(statusDisplay), "<span weight='bold' font='15' color='#ffffff'>Drive Online</span>");
+	gtk_container_add(GTK_CONTAINER(statusFrame), statusDisplay);
+	gtk_widget_set_halign(statusDisplay, GTK_ALIGN_START);
 
 	gtk_widget_show_all(window);
 }
