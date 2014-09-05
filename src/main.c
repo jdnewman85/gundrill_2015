@@ -139,7 +139,7 @@ void createDisplay() {
 	//Target Display
 	GtkWidget* targetDisplay;
 	targetDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(targetDisplay), "<span weight='bold' font='40' color='#ffffff'>12.3456</span>");
+	gtk_label_set_markup(GTK_LABEL(targetDisplay), "<span weight='bold' font='30' color='#ffffff'>12.3456</span>");
 	gtk_container_add(GTK_CONTAINER(targetFrame), targetDisplay);
 
 	//ToGo Frame
@@ -155,8 +155,58 @@ void createDisplay() {
 	//ToGo Display
 	GtkWidget* toGoDisplay;
 	toGoDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(toGoDisplay), "<span weight='bold' font='40' color='#ffffff'>65.4321</span>");
+	gtk_label_set_markup(GTK_LABEL(toGoDisplay), "<span weight='bold' font='30' color='#ffffff'>65.4321</span>");
 	gtk_container_add(GTK_CONTAINER(toGoFrame), toGoDisplay);
+
+	//Feedrate Frame
+	GtkWidget* feedrateFrame;
+	feedrateFrame = gtk_frame_new(NULL);
+	gtk_grid_attach(GTK_GRID(grid), feedrateFrame, 1, 2, 2, 1);
+	gtk_widget_set_hexpand(feedrateFrame, TRUE);
+	//Feedrate Frame Label
+	GtkWidget* feedrateFrameLabel;
+	feedrateFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(feedrateFrameLabel), "<span font='15' color='#ffffff'>Feedrate - IPM</span>");
+	gtk_frame_set_label_widget(GTK_FRAME(feedrateFrame), feedrateFrameLabel);
+	//Feedrate Box
+	GtkWidget* feedrateBox;
+	feedrateBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_container_add(GTK_CONTAINER(feedrateFrame), feedrateBox);
+	//Feedrate Display
+	GtkWidget* feedrateDisplay;
+	feedrateDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), "<span weight='bold' font='30' color='#ffffff'>2.3</span>");
+	gtk_box_pack_start(GTK_BOX(feedrateBox), feedrateDisplay, TRUE, TRUE, 0);
+	//Feedrate Override
+	GtkWidget* feedrateOverride;
+	feedrateOverride = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(feedrateOverride), "<span weight='bold' font='30' color='#ffffff'>100%</span>");
+	gtk_box_pack_start(GTK_BOX(feedrateBox), feedrateOverride, TRUE, TRUE, 0);
+
+	//Spindle Frame
+	GtkWidget* spindleFrame;
+	spindleFrame = gtk_frame_new(NULL);
+	gtk_grid_attach(GTK_GRID(grid), spindleFrame, 5, 2, 2, 1);
+	gtk_widget_set_hexpand(spindleFrame, TRUE);
+	//Spindle Frame Label
+	GtkWidget* spindleFrameLabel;
+	spindleFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(spindleFrameLabel), "<span font='15' color='#ffffff'>Spindle - RPM</span>");
+	gtk_frame_set_label_widget(GTK_FRAME(spindleFrame), spindleFrameLabel);
+	//Spindle Box
+	GtkWidget* spindleBox;
+	spindleBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_container_add(GTK_CONTAINER(spindleFrame), spindleBox);
+	//Spindle Display
+	GtkWidget* spindleDisplay;
+	spindleDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(spindleDisplay), "<span weight='bold' font='30' color='#ffffff'>500</span>");
+	gtk_box_pack_start(GTK_BOX(spindleBox), spindleDisplay, TRUE, TRUE, 0);
+	//Spindle Override
+	GtkWidget* spindleOverride;
+	spindleOverride = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(spindleOverride), "<span weight='bold' font='30' color='#ffffff'>100%</span>");
+	gtk_box_pack_start(GTK_BOX(spindleBox), spindleOverride, TRUE, TRUE, 0);
 
 	//StatusBar
 	GtkWidget* statusBar;
