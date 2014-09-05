@@ -102,16 +102,26 @@ void createDisplay() {
 	gtk_label_set_markup(GTK_LABEL(frameLabel), "<span font='30' color='#ffffff'>Gun Drill</span>");
 	gtk_frame_set_label_widget(GTK_FRAME(frame), frameLabel);
 
-	//Test Label
-	GtkWidget* label;
-	label = gtk_label_new("<span font='42'>10.34</span>");
-	gtk_label_set_markup(GTK_LABEL(label), "<span weight='bold' font='80' color='#ffffff'>10.34</span>");
-	gtk_container_add(GTK_CONTAINER(frame), label);
+	//Grid
+	GtkWidget* grid;
+	grid = gtk_grid_new();
+	gtk_container_add(GTK_CONTAINER(frame), grid);
+	gtk_widget_set_hexpand(grid, TRUE);
+	gtk_widget_set_vexpand(grid, TRUE);
+
+	//Position Label
+	GtkWidget* positionLabel;
+	positionLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(positionLabel), "<span weight='bold' font='80' color='#ffffff'>12.3456</span>");
+	gtk_grid_attach(GTK_GRID(grid), positionLabel, 0, 0, 2, 1);
+	gtk_widget_set_hexpand(positionLabel, TRUE);
 
 	//StatusBar
 	GtkWidget* statusBar;
 	statusBar = gtk_statusbar_new();
-	gtk_container_add(GTK_CONTAINER(frame), statusBar);
+	gtk_grid_attach(GTK_GRID(grid), statusBar, 0, 3, 2, 1);
+	gtk_widget_set_valign(statusBar, GTK_ALIGN_END);
+	gtk_widget_set_vexpand(statusBar, TRUE);
 
 	gtk_widget_show_all(window);
 }
