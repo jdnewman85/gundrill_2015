@@ -94,12 +94,13 @@ void createDisplay() {
 	//Frame
 	GtkWidget* frame;
 	frame = gtk_frame_new(NULL);
+	gtk_frame_set_label_align(GTK_FRAME(frame), 1.0, 1.0);
 	gtk_container_add(GTK_CONTAINER(window), frame);
 
 	//Frame Label
 	GtkWidget* frameLabel;
 	frameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(frameLabel), "<span font='30' color='#ffffff'>Gun Drill</span>");
+	gtk_label_set_markup(GTK_LABEL(frameLabel), "<span font='30' color='#ffffff'>Testers - Gun Drill</span>");
 	gtk_frame_set_label_widget(GTK_FRAME(frame), frameLabel);
 
 	//Grid
@@ -211,7 +212,7 @@ void createDisplay() {
 	//StatusBar
 	GtkWidget* statusBar;
 	statusBar = gtk_statusbar_new();
-	gtk_grid_attach(GTK_GRID(grid), statusBar, 0, 3, 8, 1);
+	gtk_grid_attach(GTK_GRID(grid), statusBar, 0, 3, 9, 1);
 	gtk_widget_set_valign(statusBar, GTK_ALIGN_END);
 	gtk_widget_set_vexpand(statusBar, TRUE);
 
