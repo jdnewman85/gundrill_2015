@@ -109,17 +109,59 @@ void createDisplay() {
 	gtk_widget_set_hexpand(grid, TRUE);
 	gtk_widget_set_vexpand(grid, TRUE);
 
-	//Position Label
-	GtkWidget* positionLabel;
-	positionLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(positionLabel), "<span weight='bold' font='80' color='#ffffff'>12.3456</span>");
-	gtk_grid_attach(GTK_GRID(grid), positionLabel, 0, 0, 2, 1);
-	gtk_widget_set_hexpand(positionLabel, TRUE);
+	//Position Frame
+	GtkWidget* positionFrame;
+	positionFrame = gtk_frame_new(NULL);
+	gtk_grid_attach(GTK_GRID(grid), positionFrame, 0, 0, 8, 1);
+	gtk_widget_set_hexpand(positionFrame, TRUE);
+	//Position Frame Label
+	GtkWidget* positionFrameLabel;
+	positionFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(positionFrameLabel), "<span font='15' color='#ffffff'>Position</span>");
+	gtk_frame_set_label_widget(GTK_FRAME(positionFrame), positionFrameLabel);
+	//Position Display
+	GtkWidget* positionDisplay;
+	positionDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), "<span weight='bold' font='80' color='#ffffff'>12.3456</span>");
+	gtk_container_add(GTK_CONTAINER(positionFrame), positionDisplay);
+
+
+	//Target Frame
+	GtkWidget* targetFrame;
+	targetFrame = gtk_frame_new(NULL);
+	gtk_grid_attach(GTK_GRID(grid), targetFrame, 1, 1, 2, 1);
+	gtk_widget_set_hexpand(targetFrame, TRUE);
+	//Target Frame Label
+	GtkWidget* targetFrameLabel;
+	targetFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(targetFrameLabel), "<span font='15' color='#ffffff'>Target</span>");
+	gtk_frame_set_label_widget(GTK_FRAME(targetFrame), targetFrameLabel);
+	//Target Display
+	GtkWidget* targetDisplay;
+	targetDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(targetDisplay), "<span weight='bold' font='40' color='#ffffff'>12.3456</span>");
+	gtk_container_add(GTK_CONTAINER(targetFrame), targetDisplay);
+
+	//ToGo Frame
+	GtkWidget* toGoFrame;
+	toGoFrame = gtk_frame_new(NULL);
+	gtk_grid_attach(GTK_GRID(grid), toGoFrame, 5, 1, 2, 1);
+	gtk_widget_set_hexpand(toGoFrame, TRUE);
+	//ToGo Frame Label
+	GtkWidget* toGoFrameLabel;
+	toGoFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(toGoFrameLabel), "<span font='15' color='#ffffff'>ToGo</span>");
+	gtk_frame_set_label_widget(GTK_FRAME(toGoFrame), toGoFrameLabel);
+	//ToGo Display
+	GtkWidget* toGoDisplay;
+	toGoDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(toGoDisplay), "<span weight='bold' font='40' color='#ffffff'>65.4321</span>");
+	gtk_container_add(GTK_CONTAINER(toGoFrame), toGoDisplay);
 
 	//StatusBar
 	GtkWidget* statusBar;
 	statusBar = gtk_statusbar_new();
-	gtk_grid_attach(GTK_GRID(grid), statusBar, 0, 3, 2, 1);
+	gtk_grid_attach(GTK_GRID(grid), statusBar, 0, 3, 8, 1);
 	gtk_widget_set_valign(statusBar, GTK_ALIGN_END);
 	gtk_widget_set_vexpand(statusBar, TRUE);
 
