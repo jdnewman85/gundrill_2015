@@ -172,13 +172,16 @@ void createDisplay() {
 	
 	//Number Entry Window
 	numberDialog = gtk_dialog_new();
+	mainBgColor.red = 65535;
+	mainBgColor.green = 65535;
+	mainBgColor.blue = 65535;
 	gtk_widget_modify_bg(numberDialog, GTK_STATE_NORMAL, &mainBgColor);
 	numberEntry = gtk_entry_new();
 	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_action_area(GTK_DIALOG(numberDialog))), numberEntry);
 //	gtk_widget_set_size_request(numberDialog, 400, 300);
 	//Number Display
 	numberDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(numberDisplay), "<span weight='bold' font='15' color='#ffffff'>TEST</span>");
+	gtk_label_set_markup(GTK_LABEL(numberDisplay), "<span weight='bold' font='15' color='#000000'>TEST</span>");
 	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(numberDialog))), numberDisplay);
 	gtk_window_set_position(GTK_WINDOW(numberDialog), GTK_WIN_POS_CENTER_ALWAYS);
 	gtk_window_set_decorated(GTK_WINDOW(numberDialog), FALSE);
