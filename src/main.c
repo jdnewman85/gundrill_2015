@@ -16,6 +16,22 @@ void sigIntHandler() {
 	gtk_main_quit();
 }
 
+gint key_press_event(GtkWidget *widget, GdkEventKey *event) {
+	printf("KEY!: '%s'\n", gdk_keyval_name(event->keyval));
+	if(GDK_KEY_Escape == event->keyval) {
+		sigIntHandler();
+	}
+	if(GDK_KEY_space == event->keyval) {
+		status = smCommand(axis, "ABSTARGET", 40960);
+	}
+	if(GDK_KEY_e == event->keyval) {
+		status = smCommand(axis, "ABSTARGET", -40960);
+	}
+	if(GDK_KEY_n == event->keyval) {
+		requestNumber();
+	}
+}
+
 int main(int argc, char** argv) {
 
 
