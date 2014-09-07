@@ -7,7 +7,7 @@
 
 //Globals
 GtkWidget* mainWindow;
-GdkColor mainBgColor;
+GdkRGBA mainBgColor;
 GdkCursor* cursor;
 GtkWidget* mainFrame;
 GtkWidget* mainFrameLabel;
@@ -34,30 +34,36 @@ GtkWidget* spindleOverride;
 GtkWidget* statusFrame;
 GtkWidget* statusFrameLabel;
 GtkWidget* statusDisplay;
+GdkRGBA numberDialogBgColor;
 GtkWidget* numberDialog;
 GtkWidget* numberEntry;
-GtkWidget* numberDisplay;
+GtkWidget* numberEntryLabel;
+
+gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
+	printf("ACTIVATE!\n");
+	gtk_dialog_response(GTK_DIALOG(numberDialog), 1);
+}
+
+gboolean timerEvent(gpointer userData) {
+	printf("TIMER!\n");
+	return TRUE;
+}
 
 void createDisplay() {
 	//Main Window
 	mainWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_maximize(GTK_WINDOW(mainWindow));
-	gtk_widget_show(mainWindow);
 
 	//Key Press Events
-	g_signal_connect(G_OBJECT(mainWindow), "key_press_event", key_press_event, NULL);
+	g_signal_connect(G_OBJECT(mainWindow), "key_press_event", (GCallback)key_press_event, NULL);
 	gtk_widget_set_events(GTK_WIDGET(mainWindow), GDK_KEY_PRESS_MASK);
 
 	//Background Color
-	mainBgColor.red = 0;
-	mainBgColor.green = 0;
-	mainBgColor.blue = 0;
-	gtk_widget_modify_bg(mainWindow, GTK_STATE_NORMAL, &mainBgColor);
-
-	//Hide Cursor
-	cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
-	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(mainWindow)), cursor);
-	gdk_cursor_unref(cursor);
+	mainBgColor.red = 0.0;
+	mainBgColor.green = 0.0;
+	mainBgColor.blue = 0.0;
+	mainBgColor.alpha = 1.0;
+	gtk_widget_override_background_color(mainWindow, GTK_STATE_NORMAL, &mainBgColor);
 
 	//Main Frame
 	mainFrame = gtk_frame_new(NULL);
@@ -172,21 +178,36 @@ void createDisplay() {
 	
 	//Number Entry Window
 	numberDialog = gtk_dialog_new();
-	mainBgColor.red = 65535;
-	mainBgColor.green = 65535;
-	mainBgColor.blue = 65535;
-	gtk_widget_modify_bg(numberDialog, GTK_STATE_NORMAL, &mainBgColor);
-	numberEntry = gtk_entry_new();
-	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_action_area(GTK_DIALOG(numberDialog))), numberEntry);
-//	gtk_widget_set_size_request(numberDialog, 400, 300);
-	//Number Display
-	numberDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(numberDisplay), "<span weight='bold' font='15' color='#000000'>TEST</span>");
-	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(numberDialog))), numberDisplay);
+	numberDialogBgColor.red = 1.0;
+	numberDialogBgColor.green = 1.0;
+	numberDialogBgColor.blue = 1.0;
+	numberDialogBgColor.alpha = 1.0;
+	gtk_widget_override_background_color(numberDialog, GTK_STATE_NORMAL, &numberDialogBgColor);
+	//Number Entry Label
+	numberEntryLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(numberEntryLabel), "<span weight='bold' font='15' color='#000000'>Enter a Value</span>");
+	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(numberDialog))), numberEntryLabel);
 	gtk_window_set_position(GTK_WINDOW(numberDialog), GTK_WIN_POS_CENTER_ALWAYS);
 	gtk_window_set_decorated(GTK_WINDOW(numberDialog), FALSE);
+	//Number Entry Widget
+	numberEntry = gtk_entry_new();
+//	numberEntry = gtk_spin_button_new(NULL, 1, 4);
+	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(numberDialog))), numberEntry);
+
+	//Numeric Entry Key Press Events
+	g_signal_connect(G_OBJECT(numberEntry), "activate", (GCallback)numericInputKeyPressEvent, NULL);
+	gtk_widget_set_events(GTK_WIDGET(numberEntry), GDK_KEY_PRESS_MASK);
+
+	//Timer Test
+	g_timeout_add(1000, (GSourceFunc) timerEvent, NULL);
 
 	gtk_widget_show_all(mainWindow);
+
+	//Hide Cursor (Must be after window is shown
+	cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
+	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(mainWindow)), cursor);
+	g_object_unref(cursor);
+
 }
 
 void requestNumber() {

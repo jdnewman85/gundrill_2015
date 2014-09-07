@@ -3,7 +3,7 @@
 
 //Externs
 extern GtkWidget* mainWindow;
-extern GdkColor mainBgColor;
+extern GdkRGBA mainBgColor;
 extern GdkCursor* cursor;
 extern GtkWidget* mainFrame;
 extern GtkWidget* mainFrameLabel;
@@ -30,9 +30,10 @@ extern GtkWidget* spindleOverride;
 extern GtkWidget* statusFrame;
 extern GtkWidget* statusFrameLabel;
 extern GtkWidget* statusDisplay;
+extern GdkRGBA numberDialogBgColor;
 extern GtkWidget* numberDialog;
 extern GtkWidget* numberEntry;
-extern GtkWidget* numberDisplay;
+extern GtkWidget* numberEntryLabel;
 
 extern char* axis;
 extern SM_STATUS status;
