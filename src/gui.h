@@ -21,12 +21,12 @@ extern GtkWidget* feedrateFrame;
 extern GtkWidget* feedrateFrameLabel;
 extern GtkWidget* feedrateBox;
 extern GtkWidget* feedrateDisplay;
-extern GtkWidget* feedrateOverride;
+extern GtkWidget* feedrateOverrideDisplay;
 extern GtkWidget* spindleFrame;
 extern GtkWidget* spindleFrameLabel;
 extern GtkWidget* spindleBox;
 extern GtkWidget* spindleDisplay;
-extern GtkWidget* spindleOverride;
+extern GtkWidget* spindleOverrideDisplay;
 extern GtkWidget* statusFrame;
 extern GtkWidget* statusFrameLabel;
 extern GtkWidget* statusDisplay;
@@ -35,10 +35,14 @@ extern GtkWidget* numberDialog;
 extern GtkWidget* numberEntry;
 extern GtkWidget* numberEntryLabel;
 
-extern char* axis;
-extern SM_STATUS status;
-
 extern gchar* positionDisplayMarkup;
+extern gchar* targetDisplayMarkup;
+extern gchar* toGoDisplayMarkup;
+extern gchar* feedrateDisplayMarkup;
+extern gchar* feedrateOverrideDisplayMarkup;
+extern gchar* spindleDisplayMarkup;
+extern gchar* spindleOverrideDisplayMarkup;
+extern gchar* statusDisplayMarkup;
 
 extern gint key_press_event(GtkWidget *widget, GdkEventKey *event);
 gboolean updateTimerEvent(gpointer userData);

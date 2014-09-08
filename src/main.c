@@ -12,8 +12,23 @@
 #include "axis.h"
 #include "gui.h"
 
+#define POSITION_DEFAULT		0
+#define FEEDRATE_OVERRIDE_DEFAULT	100
+#define FEEDRATE_OVERRIDE_MAX		150
+#define FEEDRATE_OVERRIDE_MIN		50
+#define SPINDLE_OVERRIDE_DEFAULT	100
+#define SPINDLE_OVERRIDE_MAX		150
+#define SPINDLE_OVERRIDE_MIN		50
+#define STATUS_LENGTH			100
+
 int Position;
-int TargetPosition;
+int Target;
+int ToGo;
+int Feedrate;
+int FeedrateOverride;
+int Spindle;
+int SpindleOverride;
+char Status[STATUS_LENGTH];
 
 float PositionScale = 40960.0;
 
@@ -34,27 +49,33 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event) {
 		sigIntHandler();
 	}
 	if(GDK_KEY_space == event->keyval) {
-		status = smCommand(axis, "ABSTARGET", 40960);
+		AxisStatus = smCommand(AxisName, "ABSTARGET", 40960);
 	}
 	if(GDK_KEY_e == event->keyval) {
-		status = smCommand(axis, "ABSTARGET", -40960);
+		AxisStatus = smCommand(AxisName, "ABSTARGET", -40960);
 	}
 	if(GDK_KEY_n == event->keyval) {
 		requestNumber();
 	}
 }
 
+void init() {
+	Position = POSITION_DEFAULT;
+
+}
+
 void initDrive() {
-	status=smCommand(axis, "TESTCOMMUNICATION", 0);
-	if(!SM_OK == status) {
-		//Problems
-		fprintf(stderr, "Drive not online, status: '%s'\n", statusString(status));
-	}
+	//Test Comminications
+	AxisStatus=smCommand(AxisName, "TESTCOMMUNICATION", 0);
 
-	smSetParam(axis, "ReturnDataPayloadType", 6); //TODO 6 Should be a constant
-	smSetParam(axis, "VelocityLimit", 1366);
+	//TODO REMOVE Velocity should be handled elsewhere unless this is needed for homing
+	smSetParam(AxisName, "VelocityLimit", 1366);
 
-	status = smCommand(axis, "CLEARFAULTS", 0);
+	//Set ReturnData to position
+	smSetParam(AxisName, "ReturnDataPayloadType", 6); //TODO 6 Should be a constant
+
+	//TODO Remove?
+	//AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 }
 
 void updatePosition() {
@@ -62,14 +83,24 @@ void updatePosition() {
 	smint16 diff;
 
 	//TODO Status update here?
-	status = smGetParam(axis, "ReturnDataPayload", &returnValue);
+	AxisStatus = smGetParam(AxisName, "ReturnDataPayload", &returnValue);
 	diff = returnValue-previousDrivePosition;
 	Position += diff;
 	previousDrivePosition = returnValue;
 }
 
 void updateDisplay() {
-	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position/PositionScale));
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position));
+	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target));
+	gtk_label_set_markup(GTK_LABEL(toGoDisplay), g_markup_printf_escaped(toGoDisplayMarkup, ToGo));
+	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, Feedrate));
+	gtk_label_set_markup(GTK_LABEL(feedrateOverrideDisplay), g_markup_printf_escaped(feedrateOverrideDisplayMarkup, FeedrateOverride));
+	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, Spindle));
+	gtk_label_set_markup(GTK_LABEL(spindleOverrideDisplay), g_markup_printf_escaped(spindleOverrideDisplayMarkup, SpindleOverride));
+
+	//Status
+	sprintf(Status, "Drive: %s", statusString(AxisStatus));
+	gtk_label_set_markup(GTK_LABEL(statusDisplay), g_markup_printf_escaped(statusDisplayMarkup, Status));
 }
 
 gboolean updateTimerEvent(gpointer userData) {

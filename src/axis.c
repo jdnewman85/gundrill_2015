@@ -5,8 +5,8 @@
 #include "SimpleMotion/vsd_cmd.h"
 #include "axis.h"
 
-char* axis = "TTL232R";
-SM_STATUS status;
+char* AxisName = "TTL232R";
+SM_STATUS AxisStatus;
 
 int waitForMoveDone(char *axis) {
 	smint32 status;
@@ -27,18 +27,18 @@ int waitForMoveDone(char *axis) {
 const char* statusString(SM_STATUS status) {
 	switch(status) { 
 		case SM_OK:
-			return "SM_OK";
+			return "OK";
 		case SM_ERR_NODEVICE:
-			return "SM_ERR_NODEVICE";
+			return "ERR_NODEVICE";
 		case SM_ERR_BUS:
-			return "SM_ERR_BUS";
+			return "ERR_BUS";
 		case SM_ERR_COMMUNICATION:
-			return "SM_ERR_COMMUNICATION";
+			return "ERR_COMMUNICATION";
 		case SM_ERR_PARAMETER:
-			return "SM_ERR_PARAMETER";
+			return "ERR_PARAMETER";
 	}
 	
 	//default
-	return "UNKNOWN SM_STATUS";
+	return "UNKNOWN STATUS";
 }
 

@@ -5,8 +5,8 @@
 #include "SimpleMotion/vsd_cmd.h"
 
 //Globals
-extern char* axis;
-extern SM_STATUS status;
+extern char* AxisName;
+extern SM_STATUS AxisStatus;
 extern smint32 returnValue;
 
 int waitForMoveDone(char *axis);

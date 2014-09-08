@@ -25,12 +25,12 @@ GtkWidget* feedrateFrame;
 GtkWidget* feedrateFrameLabel;
 GtkWidget* feedrateBox;
 GtkWidget* feedrateDisplay;
-GtkWidget* feedrateOverride;
+GtkWidget* feedrateOverrideDisplay;
 GtkWidget* spindleFrame;
 GtkWidget* spindleFrameLabel;
 GtkWidget* spindleBox;
 GtkWidget* spindleDisplay;
-GtkWidget* spindleOverride;
+GtkWidget* spindleOverrideDisplay;
 GtkWidget* statusFrame;
 GtkWidget* statusFrameLabel;
 GtkWidget* statusDisplay;
@@ -46,14 +46,14 @@ gchar* targetFrameLabelMarkup	= "<span font='15' color='#ffffff'>[1] Target</spa
 gchar* targetDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
 gchar* toGoFrameLabelMarkup	= "<span font='15' color='#ffffff'>ToGo</span>";
 gchar* toGoDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
-gchar* feedrateFrameLabelMarkup	= "<span font='15' color='#ffffff'>[2] Feedrate - IPM</span>";
+gchar* feedrateFrameLabelMarkup	= "<span font='15' color='#ffffff'>[2] Feedrate - IPM  [/ *]</span>";
 gchar* feedrateDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%1.1f</span>";
-gchar* feedrateOverrideMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
-gchar* spindleFrameLabelMarkup	= "<span font='15' color='#ffffff'>[3] Spindle - RPM</span>";
+gchar* feedrateOverrideDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
+gchar* spindleFrameLabelMarkup	= "<span font='15' color='#ffffff'>[3] Spindle - RPM  [- +]</span>";
 gchar* spindleDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%4d</span>";
-gchar* spindleOverrideMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
+gchar* spindleOverrideDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
 gchar* statusFrameLabelMarkup	= "<span font='15' color='#ffffff'>Status</span>";
-gchar* statusDisplayMarkup	= "<span weight='bold' font='15' color='#ffffff'>Drive Online</span>";
+gchar* statusDisplayMarkup	= "<span weight='bold' font='15' color='#ffffff'>%s</span>";
 gchar* numberEntryLabelMarkup	= "<span weight='bold' font='15' color='#000000'>Enter a Value</span>";
 
 void createDisplay() {
@@ -144,9 +144,9 @@ void createDisplay() {
 	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, 9.9));
 	gtk_box_pack_start(GTK_BOX(feedrateBox), feedrateDisplay, TRUE, TRUE, 0);
 	//Feedrate Override
-	feedrateOverride = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(feedrateOverride), g_markup_printf_escaped(feedrateOverrideMarkup, 100));
-	gtk_box_pack_start(GTK_BOX(feedrateBox), feedrateOverride, TRUE, TRUE, 0);
+	feedrateOverrideDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(feedrateOverrideDisplay), g_markup_printf_escaped(feedrateOverrideDisplayMarkup, 100));
+	gtk_box_pack_start(GTK_BOX(feedrateBox), feedrateOverrideDisplay, TRUE, TRUE, 0);
 
 	//Spindle Frame
 	spindleFrame = gtk_frame_new(NULL);
@@ -164,9 +164,9 @@ void createDisplay() {
 	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, 999));
 	gtk_box_pack_start(GTK_BOX(spindleBox), spindleDisplay, TRUE, TRUE, 0);
 	//Spindle Override
-	spindleOverride = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(spindleOverride), g_markup_printf_escaped(spindleOverrideMarkup, 100));
-	gtk_box_pack_start(GTK_BOX(spindleBox), spindleOverride, TRUE, TRUE, 0);
+	spindleOverrideDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(spindleOverrideDisplay), g_markup_printf_escaped(spindleOverrideDisplayMarkup, 100));
+	gtk_box_pack_start(GTK_BOX(spindleBox), spindleOverrideDisplay, TRUE, TRUE, 0);
 
 	//Status Frame
 	statusFrame = gtk_frame_new(NULL);
