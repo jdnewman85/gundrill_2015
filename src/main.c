@@ -1,5 +1,8 @@
 //GunDrill
 
+//TODO Should have a function to handle drive status for every function that can return it. If it returns bad, abort
+//TODO Reset for drive
+
 #include <time.h>
 #include <stdio.h>
 #include <signal.h>
@@ -13,13 +16,38 @@
 #include "gui.h"
 
 #define POSITION_DEFAULT		0
+#define TARGET_DEFAULT			10000
+#define TOGO_DEFAULT			0
+#define FEEDRATE_DEFAULT		136
+#define FEEDRATE_MAX			1366
+#define FEEDRATE_MIN			0
 #define FEEDRATE_OVERRIDE_DEFAULT	100
 #define FEEDRATE_OVERRIDE_MAX		150
 #define FEEDRATE_OVERRIDE_MIN		50
+#define FEEDRATE_OVERRIDE_INC		10
+#define SPINDLE_DEFAULT			100
+#define SPINDLE_MAX			1000
+#define SPINDLE_MIN			100
 #define SPINDLE_OVERRIDE_DEFAULT	100
 #define SPINDLE_OVERRIDE_MAX		150
 #define SPINDLE_OVERRIDE_MIN		50
+#define SPINDLE_OVERRIDE_INC		10
 #define STATUS_LENGTH			100
+
+#define POSITION_HOME			0
+#define FEEDRATE_RAPID			1366
+
+#define STATE_IDLE	0
+#define STATE_START	1
+#define STATE_FEED	2
+#define STATE_RETURN	3
+
+#define SIMPLE_STATUS_MOVING	0
+#define SIMPLE_STATUS_ERROR	1
+#define SIMPLE_STATUS_IDLE	2
+
+#define TIME_UPDATE_DISPLAY	50
+#define TIME_UPDATE_STATE	250
 
 int Position;
 int Target;
@@ -31,6 +59,8 @@ int SpindleOverride;
 char Status[STATUS_LENGTH];
 
 float PositionScale = 40960.0;
+
+int State;
 
 smint16 previousDrivePosition;
 
@@ -49,19 +79,85 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event) {
 		sigIntHandler();
 	}
 	if(GDK_KEY_space == event->keyval) {
-		AxisStatus = smCommand(AxisName, "ABSTARGET", 40960);
+		if(STATE_IDLE == State) {
+			State = STATE_START;
+		}
 	}
-	if(GDK_KEY_e == event->keyval) {
-		AxisStatus = smCommand(AxisName, "ABSTARGET", -40960);
+	//Feedrate Override
+	if(GDK_KEY_KP_Divide == event->keyval) {
+		//TODO MIN MAX FOR OVERRIDES
+		FeedrateOverride -= FEEDRATE_OVERRIDE_INC;
 	}
-	if(GDK_KEY_n == event->keyval) {
-		requestNumber();
+	if(GDK_KEY_KP_Multiply == event->keyval) {
+		FeedrateOverride += FEEDRATE_OVERRIDE_INC;
+	}
+	//Spindle Override
+	if(GDK_KEY_KP_Subtract == event->keyval) {
+		SpindleOverride -= SPINDLE_OVERRIDE_INC;
+	}
+	if(GDK_KEY_KP_Add == event->keyval) {
+		SpindleOverride += SPINDLE_OVERRIDE_INC;
+	}
+	if(GDK_KEY_r == event->keyval) {
+		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
+	}
+}
+
+smint32 withOverride(smint32 v, smint32 o) {
+	return (int)(v*(o/100.0));
+}
+
+void doState() {
+	smint32 simpleStatus;
+
+	switch(State) {
+	case STATE_IDLE:
+		//Check for START? TODO?
+		break;
+	case STATE_START:
+		//Start part, and set into feed
+		//Set feedrate TODO Proper
+		smSetParam(AxisName, "VelocityLimit", withOverride(Feedrate, FeedrateOverride));
+		//TODO Set IO status
+		//Move
+		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
+		State = STATE_FEED;
+		break;
+	case STATE_FEED:
+		//Feeding, wait for move complete, then return
+		//Update Feedrate incase override has been changed
+		smSetParam(AxisName, "VelocityLimit", withOverride(Feedrate, FeedrateOverride));
+		//Move Complete?
+		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
+		if(SIMPLE_STATUS_IDLE == simpleStatus) {
+			//Good, TODO Dwell at all?
+			//Rapid back
+			smSetParam(AxisName, "VelocityLimit", FEEDRATE_RAPID);
+			AxisStatus = smCommand(AxisName, "ABSTARGET", POSITION_HOME);
+			State = STATE_RETURN;
+		}
+		break;
+	case STATE_RETURN:
+		//Returning, wait for move complete, then idle
+		//Move Complete?
+		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
+		if(SIMPLE_STATUS_IDLE == simpleStatus) {
+			//Good, time to go idle
+			//TODO Parts counter?
+			State = STATE_IDLE;
+		}
+		break;
 	}
 }
 
 void init() {
 	Position = POSITION_DEFAULT;
-
+	Target = TARGET_DEFAULT;
+	ToGo = TOGO_DEFAULT;
+	Feedrate = FEEDRATE_DEFAULT;
+	FeedrateOverride = FEEDRATE_OVERRIDE_DEFAULT;
+	Spindle = SPINDLE_DEFAULT;
+	SpindleOverride = SPINDLE_OVERRIDE_DEFAULT;
 }
 
 void initDrive() {
@@ -69,7 +165,7 @@ void initDrive() {
 	AxisStatus=smCommand(AxisName, "TESTCOMMUNICATION", 0);
 
 	//TODO REMOVE Velocity should be handled elsewhere unless this is needed for homing
-	smSetParam(AxisName, "VelocityLimit", 1366);
+//	smSetParam(AxisName, "VelocityLimit", 1366);
 
 	//Set ReturnData to position
 	smSetParam(AxisName, "ReturnDataPayloadType", 6); //TODO 6 Should be a constant
@@ -90,12 +186,13 @@ void updatePosition() {
 }
 
 void updateDisplay() {
-	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position));
-	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target));
-	gtk_label_set_markup(GTK_LABEL(toGoDisplay), g_markup_printf_escaped(toGoDisplayMarkup, ToGo));
-	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, Feedrate));
+	//NOTE: CHECK DISPLAY PRINTF TYPES!
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position/1.0));
+	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target/1.0));
+	gtk_label_set_markup(GTK_LABEL(toGoDisplay), g_markup_printf_escaped(toGoDisplayMarkup, (Target-Position)/1.0));
+	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride)/1.0));
 	gtk_label_set_markup(GTK_LABEL(feedrateOverrideDisplay), g_markup_printf_escaped(feedrateOverrideDisplayMarkup, FeedrateOverride));
-	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, Spindle));
+	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, withOverride(Spindle, SpindleOverride)/1.0));
 	gtk_label_set_markup(GTK_LABEL(spindleOverrideDisplay), g_markup_printf_escaped(spindleOverrideDisplayMarkup, SpindleOverride));
 
 	//Status
@@ -103,10 +200,16 @@ void updateDisplay() {
 	gtk_label_set_markup(GTK_LABEL(statusDisplay), g_markup_printf_escaped(statusDisplayMarkup, Status));
 }
 
-gboolean updateTimerEvent(gpointer userData) {
+gboolean updateDisplayEvent(gpointer userData) {
 	updatePosition();
-
 	updateDisplay();
+
+	return TRUE;
+}
+
+gboolean updateStateEvent(gpointer userData) {
+	doState();
+
 	return TRUE;
 }
 
@@ -123,6 +226,8 @@ int main(int argc, char** argv) {
 
 	createDisplay();
 
+	init();
+
 	initDrive();
 
 	//Numeric Entry Key Press Events
@@ -130,7 +235,8 @@ int main(int argc, char** argv) {
 	gtk_widget_set_events(GTK_WIDGET(numberEntry), GDK_KEY_PRESS_MASK);
 
 	//Timer Test
-	g_timeout_add(10, (GSourceFunc) updateTimerEvent, NULL);
+	g_timeout_add(TIME_UPDATE_DISPLAY, (GSourceFunc) updateDisplayEvent, NULL);
+	g_timeout_add(TIME_UPDATE_STATE, (GSourceFunc) updateStateEvent, NULL);
 
 	
 	//Main Loop
