@@ -18,9 +18,9 @@ GtkWidget* positionDisplay;
 GtkWidget* targetFrame;
 GtkWidget* targetFrameLabel;
 GtkWidget* targetDisplay;
-GtkWidget* toGoFrame;
-GtkWidget* toGoFrameLabel;
-GtkWidget* toGoDisplay;
+GtkWidget* toTargetFrame;
+GtkWidget* toTargetFrameLabel;
+GtkWidget* toTargetDisplay;
 GtkWidget* feedrateFrame;
 GtkWidget* feedrateFrameLabel;
 GtkWidget* feedrateBox;
@@ -44,8 +44,8 @@ gchar* positionFrameLabelMarkup	= "<span font='15' color='#ffffff'>Position</spa
 gchar* positionDisplayMarkup	= "<span weight='bold' font='80' color='#ffffff'>%2.4f</span>";
 gchar* targetFrameLabelMarkup	= "<span font='15' color='#ffffff'>[1] Target</span>";
 gchar* targetDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
-gchar* toGoFrameLabelMarkup	= "<span font='15' color='#ffffff'>ToGo</span>";
-gchar* toGoDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
+gchar* toTargetFrameLabelMarkup	= "<span font='15' color='#ffffff'>ToTarget</span>";
+gchar* toTargetDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
 gchar* feedrateFrameLabelMarkup	= "<span font='15' color='#ffffff'>[2] Feedrate - IPM  [/ *]</span>";
 gchar* feedrateDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%1.1f</span>";
 gchar* feedrateOverrideDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
@@ -115,18 +115,18 @@ void createDisplay() {
 	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, 99.9999));
 	gtk_container_add(GTK_CONTAINER(targetFrame), targetDisplay);
 
-	//ToGo Frame
-	toGoFrame = gtk_frame_new(NULL);
-	gtk_grid_attach(GTK_GRID(mainGrid), toGoFrame, 5, 1, 3, 1);
-	gtk_widget_set_hexpand(toGoFrame, TRUE);
-	//ToGo Frame Label
-	toGoFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(toGoFrameLabel), toGoFrameLabelMarkup);
-	gtk_frame_set_label_widget(GTK_FRAME(toGoFrame), toGoFrameLabel);
-	//ToGo Display
-	toGoDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(toGoDisplay), g_markup_printf_escaped(toGoDisplayMarkup, 99.9999));
-	gtk_container_add(GTK_CONTAINER(toGoFrame), toGoDisplay);
+	//ToTarget Frame
+	toTargetFrame = gtk_frame_new(NULL);
+	gtk_grid_attach(GTK_GRID(mainGrid), toTargetFrame, 5, 1, 3, 1);
+	gtk_widget_set_hexpand(toTargetFrame, TRUE);
+	//ToTarget Frame Label
+	toTargetFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(toTargetFrameLabel), toTargetFrameLabelMarkup);
+	gtk_frame_set_label_widget(GTK_FRAME(toTargetFrame), toTargetFrameLabel);
+	//ToTarget Display
+	toTargetDisplay = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(toTargetDisplay), g_markup_printf_escaped(toTargetDisplayMarkup, 99.9999));
+	gtk_container_add(GTK_CONTAINER(toTargetFrame), toTargetDisplay);
 
 	//Feedrate Frame
 	feedrateFrame = gtk_frame_new(NULL);

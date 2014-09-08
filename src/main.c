@@ -2,6 +2,9 @@
 
 //TODO Should have a function to handle drive status for every function that can return it. If it returns bad, abort
 //TODO Reset for drive
+//TODO Fix ToGo
+//TODO Error better
+//TODO Feedhold?
 
 #include <time.h>
 #include <stdio.h>
@@ -16,7 +19,7 @@
 #include "gui.h"
 
 #define POSITION_DEFAULT		0
-#define TARGET_DEFAULT			10000
+#define TARGET_DEFAULT			1000000
 #define TOGO_DEFAULT			0
 #define FEEDRATE_DEFAULT		136
 #define FEEDRATE_MAX			1366
@@ -75,36 +78,46 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 
 gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	printf("KEY!: '%s'\n", gdk_keyval_name(event->keyval));
-	if(GDK_KEY_Escape == event->keyval) {
+	switch(event->keyval) {
+	case GDK_KEY_Escape:
 		sigIntHandler();
-	}
-	if(GDK_KEY_space == event->keyval) {
+		break;
+	case GDK_KEY_space:
 		if(STATE_IDLE == State) {
 			State = STATE_START;
 		}
-	}
+		break;
 	//Feedrate Override
-	if(GDK_KEY_KP_Divide == event->keyval) {
+	case GDK_KEY_KP_Divide:
 		//TODO MIN MAX FOR OVERRIDES
 		FeedrateOverride -= FEEDRATE_OVERRIDE_INC;
-	}
-	if(GDK_KEY_KP_Multiply == event->keyval) {
+		break;
+	case GDK_KEY_KP_Multiply:
 		FeedrateOverride += FEEDRATE_OVERRIDE_INC;
-	}
+		break;
 	//Spindle Override
-	if(GDK_KEY_KP_Subtract == event->keyval) {
+	case GDK_KEY_KP_Subtract:
 		SpindleOverride -= SPINDLE_OVERRIDE_INC;
-	}
-	if(GDK_KEY_KP_Add == event->keyval) {
+		break;
+	case GDK_KEY_KP_Add:
 		SpindleOverride += SPINDLE_OVERRIDE_INC;
-	}
-	if(GDK_KEY_r == event->keyval) {
+		break;
+	case GDK_KEY_r:
 		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
+		break;
 	}
 }
 
-smint32 withOverride(smint32 v, smint32 o) {
-	return (int)(v*(o/100.0));
+float withOverride(float value, float override, float min, float max) {
+	float temp;
+	temp = value*(override/100.0);
+	if(temp > max) {
+		temp = max;
+	}
+	if(temp < min) {
+		temp = min;
+	}
+	return temp;
 }
 
 void doState() {
@@ -117,7 +130,7 @@ void doState() {
 	case STATE_START:
 		//Start part, and set into feed
 		//Set feedrate TODO Proper
-		smSetParam(AxisName, "VelocityLimit", withOverride(Feedrate, FeedrateOverride));
+		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)); //TODO Scale
 		//TODO Set IO status
 		//Move
 		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
@@ -126,7 +139,7 @@ void doState() {
 	case STATE_FEED:
 		//Feeding, wait for move complete, then return
 		//Update Feedrate incase override has been changed
-		smSetParam(AxisName, "VelocityLimit", withOverride(Feedrate, FeedrateOverride));
+		smSetParam(AxisName, "VelocityLimit", withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX));
 		//Move Complete?
 		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
 		if(SIMPLE_STATUS_IDLE == simpleStatus) {
@@ -189,10 +202,10 @@ void updateDisplay() {
 	//NOTE: CHECK DISPLAY PRINTF TYPES!
 	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position/1.0));
 	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target/1.0));
-	gtk_label_set_markup(GTK_LABEL(toGoDisplay), g_markup_printf_escaped(toGoDisplayMarkup, (Target-Position)/1.0));
-	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride)/1.0));
+	gtk_label_set_markup(GTK_LABEL(toTargetDisplay), g_markup_printf_escaped(toTargetDisplayMarkup, (Target-Position)/1.0));
+	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)));
 	gtk_label_set_markup(GTK_LABEL(feedrateOverrideDisplay), g_markup_printf_escaped(feedrateOverrideDisplayMarkup, FeedrateOverride));
-	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, withOverride(Spindle, SpindleOverride)/1.0));
+	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, withOverride(Spindle, SpindleOverride, SPINDLE_MIN, SPINDLE_MAX)));
 	gtk_label_set_markup(GTK_LABEL(spindleOverrideDisplay), g_markup_printf_escaped(spindleOverrideDisplayMarkup, SpindleOverride));
 
 	//Status
