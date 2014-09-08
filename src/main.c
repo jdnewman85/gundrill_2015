@@ -73,7 +73,7 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 	gtk_dialog_response(GTK_DIALOG(numberDialog), 1);
 }
 
-gint key_press_event(GtkWidget *widget, GdkEventKey *event) {
+gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	printf("KEY!: '%s'\n", gdk_keyval_name(event->keyval));
 	if(GDK_KEY_Escape == event->keyval) {
 		sigIntHandler();

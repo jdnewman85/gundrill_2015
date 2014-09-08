@@ -44,7 +44,7 @@ extern gchar* spindleDisplayMarkup;
 extern gchar* spindleOverrideDisplayMarkup;
 extern gchar* statusDisplayMarkup;
 
-extern gint key_press_event(GtkWidget *widget, GdkEventKey *event);
+extern gint key_release_event(GtkWidget *widget, GdkEventKey *event);
 gboolean updateTimerEvent(gpointer userData);
 void createDisplay();
 void requestNumber();

@@ -62,8 +62,8 @@ void createDisplay() {
 	gtk_window_maximize(GTK_WINDOW(mainWindow));
 
 	//Key Press Events
-	g_signal_connect(G_OBJECT(mainWindow), "key_press_event", (GCallback)key_press_event, NULL);
-	gtk_widget_set_events(GTK_WIDGET(mainWindow), GDK_KEY_PRESS_MASK);
+	g_signal_connect(G_OBJECT(mainWindow), "key_release_event", (GCallback)key_release_event, NULL);
+	gtk_widget_set_events(GTK_WIDGET(mainWindow), GDK_KEY_RELEASE_MASK);
 
 	//Background Color
 	mainBgColor.red = 0.0;
