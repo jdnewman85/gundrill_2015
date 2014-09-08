@@ -43,6 +43,7 @@ extern gchar* feedrateOverrideDisplayMarkup;
 extern gchar* spindleDisplayMarkup;
 extern gchar* spindleOverrideDisplayMarkup;
 extern gchar* statusDisplayMarkup;
+extern gchar* numberEntryLabelMarkup;
 
 extern gint key_release_event(GtkWidget *widget, GdkEventKey *event);
 gboolean updateTimerEvent(gpointer userData);

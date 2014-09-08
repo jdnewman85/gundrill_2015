@@ -20,7 +20,7 @@
 #include "gui.h"
 
 #define POSITION_DEFAULT		0
-#define TARGET_DEFAULT			1000000
+#define TARGET_DEFAULT			20000
 #define TARGET_MIN			0
 #define TARGET_MAX			1000000
 #define TOGO_DEFAULT			0
@@ -43,10 +43,11 @@
 #define POSITION_HOME			0
 #define FEEDRATE_RAPID			1366
 
-#define STATE_IDLE	0
-#define STATE_START	1
-#define STATE_FEED	2
-#define STATE_RETURN	3
+#define STATE_IDLE		0
+#define STATE_START		1
+#define STATE_FEED		2
+#define STATE_RETURN		3
+#define STATE_RETURN_ZERO 4
 
 #define SIMPLE_STATUS_MOVING	0
 #define SIMPLE_STATUS_ERROR	1
@@ -60,8 +61,12 @@
 #define INPUT_TYPE_FEEDRATE	2
 #define INPUT_TYPE_SPINDLE	3
 
+#define BACKLASH_MOVE_AMOUNT	500
+#define ZERO_OFFSET_TOLERANCE	2
+
 
 int Position;
+int ZeroOffset;
 int Target;
 int ToGo;
 int Feedrate;
@@ -115,6 +120,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		break;
 	//Set Target
 	case GDK_KEY_1:
+		gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Feed Amount"));
 		if(STATE_IDLE == State) {
 			InputType = INPUT_TYPE_TARGET;
 			requestNumber();
@@ -122,6 +128,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		break;
 	//Set Feedrate
 	case GDK_KEY_2:
+		gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Feedrate"));
 		if(STATE_IDLE == State) {
 			InputType = INPUT_TYPE_FEEDRATE;
 			requestNumber();
@@ -129,6 +136,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		break;
 	//Set Spindle
 	case GDK_KEY_3:
+		gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Spindle Speed"));
 		if(STATE_IDLE == State) {
 			InputType = INPUT_TYPE_SPINDLE;
 			requestNumber();
@@ -160,6 +168,9 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	case GDK_KEY_r:
 		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 		break;
+	case GDK_KEY_z:
+		ZeroOffset = Position;
+		break;
 	}
 }
 
@@ -184,11 +195,15 @@ void doState() {
 		break;
 	case STATE_START:
 		//Start part, and set into feed
+		//Set current position as 0, if too far away
+		if(ZeroOffset-Position > ZERO_OFFSET_TOLERANCE || ZeroOffset-Position < -ZERO_OFFSET_TOLERANCE) {
+			ZeroOffset = Position;
+		}
 		//Set feedrate TODO Proper
 		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)); //TODO Scale
 		//TODO Set IO status
 		//Move
-		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
+		AxisStatus = smCommand(AxisName, "ABSTARGET", Target+ZeroOffset);
 		State = STATE_FEED;
 		break;
 	case STATE_FEED:
@@ -201,16 +216,26 @@ void doState() {
 			//Good, TODO Dwell at all?
 			//Rapid back
 			smSetParam(AxisName, "VelocityLimit", FEEDRATE_RAPID);
-			AxisStatus = smCommand(AxisName, "ABSTARGET", POSITION_HOME);
+			AxisStatus = smCommand(AxisName, "ABSTARGET", ZeroOffset-BACKLASH_MOVE_AMOUNT);
 			State = STATE_RETURN;
 		}
 		break;
 	case STATE_RETURN:
-		//Returning, wait for move complete, then idle
+		//Returning, wait for move complete, then return to 0
 		//Move Complete?
 		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
 		if(SIMPLE_STATUS_IDLE == simpleStatus) {
-			//Good, time to go idle
+			//Complete
+			AxisStatus = smCommand(AxisName, "ABSTARGET", ZeroOffset);
+			State = STATE_RETURN_ZERO;
+		}
+		break;
+	case STATE_RETURN_ZERO:
+		//Returning to 0, then idle
+		//Move Complete?
+		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
+		if(SIMPLE_STATUS_IDLE == simpleStatus) {
+			//Complete
 			//TODO Parts counter?
 			State = STATE_IDLE;
 		}
@@ -226,6 +251,9 @@ void init() {
 	FeedrateOverride = FEEDRATE_OVERRIDE_DEFAULT;
 	Spindle = SPINDLE_DEFAULT;
 	SpindleOverride = SPINDLE_OVERRIDE_DEFAULT;
+
+	//Set current position as 0
+	ZeroOffset = Position;
 }
 
 void initDrive() {
@@ -255,7 +283,7 @@ void updatePosition() {
 
 void updateDisplay() {
 	//NOTE: CHECK DISPLAY PRINTF TYPES!
-	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position/1.0));
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, (Position-ZeroOffset)/1.0));
 	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target/1.0));
 	gtk_label_set_markup(GTK_LABEL(toTargetDisplay), g_markup_printf_escaped(toTargetDisplayMarkup, (Target-Position)/1.0));
 	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)));
@@ -294,9 +322,8 @@ int main(int argc, char** argv) {
 
 	createDisplay();
 
-	init();
 
-	initDrive();
+	init();
 
 	//Numeric Entry Key Press Events
 	g_signal_connect(G_OBJECT(numberEntry), "activate", (GCallback)numericInputKeyPressEvent, NULL);

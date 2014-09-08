@@ -54,7 +54,7 @@ gchar* spindleDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%4d
 gchar* spindleOverrideDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
 gchar* statusFrameLabelMarkup	= "<span font='15' color='#ffffff'>Status - [R]eset</span>";
 gchar* statusDisplayMarkup	= "<span weight='bold' font='15' color='#ffffff'>%s</span>";
-gchar* numberEntryLabelMarkup	= "<span weight='bold' font='15' color='#000000'>Enter a Value</span>";
+gchar* numberEntryLabelMarkup	= "<span weight='bold' font='15' color='#000000'>Enter a %s</span>";
 
 void createDisplay() {
 	//Main Window
