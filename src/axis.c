@@ -7,7 +7,6 @@
 
 char* axis = "TTL232R";
 SM_STATUS status;
-smint32 returnValue;
 
 int waitForMoveDone(char *axis) {
 	smint32 status;

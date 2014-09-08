@@ -38,8 +38,10 @@ extern GtkWidget* numberEntryLabel;
 extern char* axis;
 extern SM_STATUS status;
 
+extern gchar* positionDisplayMarkup;
 
 extern gint key_press_event(GtkWidget *widget, GdkEventKey *event);
+gboolean updateTimerEvent(gpointer userData);
 void createDisplay();
 void requestNumber();
 

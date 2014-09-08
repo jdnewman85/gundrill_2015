@@ -39,15 +39,22 @@ GtkWidget* numberDialog;
 GtkWidget* numberEntry;
 GtkWidget* numberEntryLabel;
 
-gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
-	printf("ACTIVATE!\n");
-	gtk_dialog_response(GTK_DIALOG(numberDialog), 1);
-}
-
-gboolean timerEvent(gpointer userData) {
-	printf("TIMER!\n");
-	return TRUE;
-}
+gchar* mainFrameLabelMarkup	= "<span font='15' color='#ffffff'>Testers - Gun Drill</span>";
+gchar* positionFrameLabelMarkup	= "<span font='15' color='#ffffff'>Position</span>";
+gchar* positionDisplayMarkup	= "<span weight='bold' font='80' color='#ffffff'>%2.4f</span>";
+gchar* targetFrameLabelMarkup	= "<span font='15' color='#ffffff'>[1] Target</span>";
+gchar* targetDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
+gchar* toGoFrameLabelMarkup	= "<span font='15' color='#ffffff'>ToGo</span>";
+gchar* toGoDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
+gchar* feedrateFrameLabelMarkup	= "<span font='15' color='#ffffff'>[2] Feedrate - IPM</span>";
+gchar* feedrateDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%1.1f</span>";
+gchar* feedrateOverrideMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
+gchar* spindleFrameLabelMarkup	= "<span font='15' color='#ffffff'>[3] Spindle - RPM</span>";
+gchar* spindleDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%4d</span>";
+gchar* spindleOverrideMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
+gchar* statusFrameLabelMarkup	= "<span font='15' color='#ffffff'>Status</span>";
+gchar* statusDisplayMarkup	= "<span weight='bold' font='15' color='#ffffff'>Drive Online</span>";
+gchar* numberEntryLabelMarkup	= "<span weight='bold' font='15' color='#000000'>Enter a Value</span>";
 
 void createDisplay() {
 	//Main Window
@@ -72,7 +79,7 @@ void createDisplay() {
 
 	//Main Frame Label
 	mainFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(mainFrameLabel), "<span font='15' color='#ffffff'>Testers - Gun Drill</span>");
+	gtk_label_set_markup(GTK_LABEL(mainFrameLabel), mainFrameLabelMarkup);
 	gtk_frame_set_label_widget(GTK_FRAME(mainFrame), mainFrameLabel);
 
 	//Grid
@@ -87,11 +94,11 @@ void createDisplay() {
 	gtk_widget_set_hexpand(positionFrame, TRUE);
 	//Position Frame Label
 	positionFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(positionFrameLabel), "<span font='15' color='#ffffff'>Position</span>");
+	gtk_label_set_markup(GTK_LABEL(positionFrameLabel), positionFrameLabelMarkup);
 	gtk_frame_set_label_widget(GTK_FRAME(positionFrame), positionFrameLabel);
 	//Position Display
 	positionDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(positionDisplay), "<span weight='bold' font='80' color='#ffffff'>12.3456</span>");
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, 99.9999));
 	gtk_container_add(GTK_CONTAINER(positionFrame), positionDisplay);
 
 
@@ -101,11 +108,11 @@ void createDisplay() {
 	gtk_widget_set_hexpand(targetFrame, TRUE);
 	//Target Frame Label
 	targetFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(targetFrameLabel), "<span font='15' color='#ffffff'>Target</span>");
+	gtk_label_set_markup(GTK_LABEL(targetFrameLabel), targetFrameLabelMarkup);
 	gtk_frame_set_label_widget(GTK_FRAME(targetFrame), targetFrameLabel);
 	//Target Display
 	targetDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(targetDisplay), "<span weight='bold' font='30' color='#ffffff'>12.3456</span>");
+	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, 99.9999));
 	gtk_container_add(GTK_CONTAINER(targetFrame), targetDisplay);
 
 	//ToGo Frame
@@ -114,11 +121,11 @@ void createDisplay() {
 	gtk_widget_set_hexpand(toGoFrame, TRUE);
 	//ToGo Frame Label
 	toGoFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(toGoFrameLabel), "<span font='15' color='#ffffff'>ToGo</span>");
+	gtk_label_set_markup(GTK_LABEL(toGoFrameLabel), toGoFrameLabelMarkup);
 	gtk_frame_set_label_widget(GTK_FRAME(toGoFrame), toGoFrameLabel);
 	//ToGo Display
 	toGoDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(toGoDisplay), "<span weight='bold' font='30' color='#ffffff'>65.4321</span>");
+	gtk_label_set_markup(GTK_LABEL(toGoDisplay), g_markup_printf_escaped(toGoDisplayMarkup, 99.9999));
 	gtk_container_add(GTK_CONTAINER(toGoFrame), toGoDisplay);
 
 	//Feedrate Frame
@@ -127,18 +134,18 @@ void createDisplay() {
 	gtk_widget_set_hexpand(feedrateFrame, TRUE);
 	//Feedrate Frame Label
 	feedrateFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(feedrateFrameLabel), "<span font='15' color='#ffffff'>Feedrate - IPM</span>");
+	gtk_label_set_markup(GTK_LABEL(feedrateFrameLabel), feedrateFrameLabelMarkup);
 	gtk_frame_set_label_widget(GTK_FRAME(feedrateFrame), feedrateFrameLabel);
 	//Feedrate Box
 	feedrateBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_container_add(GTK_CONTAINER(feedrateFrame), feedrateBox);
 	//Feedrate Display
 	feedrateDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), "<span weight='bold' font='30' color='#ffffff'>2.3</span>");
+	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, 9.9));
 	gtk_box_pack_start(GTK_BOX(feedrateBox), feedrateDisplay, TRUE, TRUE, 0);
 	//Feedrate Override
 	feedrateOverride = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(feedrateOverride), "<span weight='bold' font='30' color='#ffffff'>100%</span>");
+	gtk_label_set_markup(GTK_LABEL(feedrateOverride), g_markup_printf_escaped(feedrateOverrideMarkup, 100));
 	gtk_box_pack_start(GTK_BOX(feedrateBox), feedrateOverride, TRUE, TRUE, 0);
 
 	//Spindle Frame
@@ -147,18 +154,18 @@ void createDisplay() {
 	gtk_widget_set_hexpand(spindleFrame, TRUE);
 	//Spindle Frame Label
 	spindleFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(spindleFrameLabel), "<span font='15' color='#ffffff'>Spindle - RPM</span>");
+	gtk_label_set_markup(GTK_LABEL(spindleFrameLabel), spindleFrameLabelMarkup);
 	gtk_frame_set_label_widget(GTK_FRAME(spindleFrame), spindleFrameLabel);
 	//Spindle Box
 	spindleBox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_container_add(GTK_CONTAINER(spindleFrame), spindleBox);
 	//Spindle Display
 	spindleDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(spindleDisplay), "<span weight='bold' font='30' color='#ffffff'>500</span>");
+	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, 999));
 	gtk_box_pack_start(GTK_BOX(spindleBox), spindleDisplay, TRUE, TRUE, 0);
 	//Spindle Override
 	spindleOverride = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(spindleOverride), "<span weight='bold' font='30' color='#ffffff'>100%</span>");
+	gtk_label_set_markup(GTK_LABEL(spindleOverride), g_markup_printf_escaped(spindleOverrideMarkup, 100));
 	gtk_box_pack_start(GTK_BOX(spindleBox), spindleOverride, TRUE, TRUE, 0);
 
 	//Status Frame
@@ -168,11 +175,11 @@ void createDisplay() {
 	gtk_widget_set_valign(statusFrame, GTK_ALIGN_BASELINE);
 	//Status Frame Label
 	statusFrameLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(statusFrameLabel), "<span font='15' color='#ffffff'>Status</span>");
+	gtk_label_set_markup(GTK_LABEL(statusFrameLabel), statusFrameLabelMarkup);
 	gtk_frame_set_label_widget(GTK_FRAME(statusFrame), statusFrameLabel);
 	//Status Display
 	statusDisplay = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(statusDisplay), "<span weight='bold' font='15' color='#ffffff'>Drive Online</span>");
+	gtk_label_set_markup(GTK_LABEL(statusDisplay), statusDisplayMarkup);
 	gtk_container_add(GTK_CONTAINER(statusFrame), statusDisplay);
 	gtk_widget_set_halign(statusDisplay, GTK_ALIGN_START);
 	
@@ -185,21 +192,13 @@ void createDisplay() {
 	gtk_widget_override_background_color(numberDialog, GTK_STATE_NORMAL, &numberDialogBgColor);
 	//Number Entry Label
 	numberEntryLabel = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(numberEntryLabel), "<span weight='bold' font='15' color='#000000'>Enter a Value</span>");
+	gtk_label_set_markup(GTK_LABEL(numberEntryLabel), numberEntryLabelMarkup);
 	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(numberDialog))), numberEntryLabel);
 	gtk_window_set_position(GTK_WINDOW(numberDialog), GTK_WIN_POS_CENTER_ALWAYS);
 	gtk_window_set_decorated(GTK_WINDOW(numberDialog), FALSE);
 	//Number Entry Widget
 	numberEntry = gtk_entry_new();
-//	numberEntry = gtk_spin_button_new(NULL, 1, 4);
 	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(numberDialog))), numberEntry);
-
-	//Numeric Entry Key Press Events
-	g_signal_connect(G_OBJECT(numberEntry), "activate", (GCallback)numericInputKeyPressEvent, NULL);
-	gtk_widget_set_events(GTK_WIDGET(numberEntry), GDK_KEY_PRESS_MASK);
-
-	//Timer Test
-	g_timeout_add(1000, (GSourceFunc) timerEvent, NULL);
 
 	gtk_widget_show_all(mainWindow);
 
