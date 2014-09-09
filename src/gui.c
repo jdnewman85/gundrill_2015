@@ -34,10 +34,20 @@ GtkWidget* spindleOverrideDisplay;
 GtkWidget* statusFrame;
 GtkWidget* statusFrameLabel;
 GtkWidget* statusDisplay;
-GdkRGBA numberDialogBgColor;
+GdkRGBA dialogBgColor;
 GtkWidget* numberDialog;
 GtkWidget* numberEntry;
 GtkWidget* numberEntryLabel;
+GtkWidget* jogDialog;
+GtkWidget* jogDialogFrame;
+GtkWidget* jogDialogFrameLabel;
+GtkWidget* jogDialogGrid;
+GtkWidget* jogLabel1;
+GtkWidget* jogLabel2;
+GtkWidget* jogLabel3;
+GtkWidget* jogLabel4;
+GtkWidget* jogLabel5;
+GtkWidget* jogLabel6;
 
 gchar* mainFrameLabelMarkup	= "<span font='15' color='#ffffff'>Testers - Gun Drill</span>";
 gchar* positionFrameLabelMarkup	= "<span font='15' color='#ffffff'>Position</span>";
@@ -55,6 +65,13 @@ gchar* spindleOverrideDisplayMarkup	= "<span weight='bold' font='30' color='#fff
 gchar* statusFrameLabelMarkup	= "<span font='15' color='#ffffff'>Status - [R]eset</span>";
 gchar* statusDisplayMarkup	= "<span weight='bold' font='15' color='#ffffff'>%s</span>";
 gchar* numberEntryLabelMarkup	= "<span weight='bold' font='15' color='#000000'>Enter a %s</span>";
+gchar* jogDialogFrameLabelMarkup= "<span weight='bold' font='40' color='#000000'>JOG</span>";
+gchar* jogLabelMarkup1		= "<span weight='bold' font='60' color='%s'>   1X </span>";
+gchar* jogLabelMarkup2		= "<span weight='bold' font='60' color='%s'>  10X </span>";
+gchar* jogLabelMarkup3		= "<span weight='bold' font='60' color='%s'> 100X </span>";
+gchar* jogLabelMarkup4		= "<span weight='bold' font='60' color='%s'> .001 </span>";
+gchar* jogLabelMarkup5		= "<span weight='bold' font='60' color='%s'>  .01 </span>";
+gchar* jogLabelMarkup6		= "<span weight='bold' font='60' color='%s'>   .1 </span>";
 
 void createDisplay() {
 	//Main Window
@@ -185,11 +202,11 @@ void createDisplay() {
 	
 	//Number Entry Window
 	numberDialog = gtk_dialog_new();
-	numberDialogBgColor.red = 1.0;
-	numberDialogBgColor.green = 1.0;
-	numberDialogBgColor.blue = 1.0;
-	numberDialogBgColor.alpha = 1.0;
-	gtk_widget_override_background_color(numberDialog, GTK_STATE_NORMAL, &numberDialogBgColor);
+	dialogBgColor.red = 1.0;
+	dialogBgColor.green = 1.0;
+	dialogBgColor.blue = 1.0;
+	dialogBgColor.alpha = 1.0;
+	gtk_widget_override_background_color(numberDialog, GTK_STATE_NORMAL, &dialogBgColor);
 	//Number Entry Label
 	numberEntryLabel = gtk_label_new(NULL);
 	gtk_label_set_markup(GTK_LABEL(numberEntryLabel), numberEntryLabelMarkup);
@@ -200,17 +217,68 @@ void createDisplay() {
 	numberEntry = gtk_entry_new();
 	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(numberDialog))), numberEntry);
 
+	//Jog Window
+	jogDialog = gtk_dialog_new();
+	dialogBgColor.red = 1.0;
+	dialogBgColor.green = 1.0;
+	dialogBgColor.blue = 1.0;
+	dialogBgColor.alpha = 1.0;
+	gtk_widget_override_background_color(jogDialog, GTK_STATE_NORMAL, &dialogBgColor);
+	//Jog Frame
+	jogDialogFrame = gtk_frame_new(NULL);
+	gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(jogDialog))), jogDialogFrame);
+	//Jog Frame Label
+	jogDialogFrameLabel = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(jogDialogFrameLabel), jogDialogFrameLabelMarkup);
+	gtk_frame_set_label_widget(GTK_FRAME(jogDialogFrame), jogDialogFrameLabel);
+	//Jog Grid
+	jogDialogGrid = gtk_grid_new();
+	gtk_container_add(GTK_CONTAINER(jogDialogFrame), jogDialogGrid);
+	//Jog Label
+	jogLabel1 = gtk_label_new(NULL);
+	jogLabel2 = gtk_label_new(NULL);
+	jogLabel3 = gtk_label_new(NULL);
+	jogLabel4 = gtk_label_new(NULL);
+	jogLabel5 = gtk_label_new(NULL);
+	jogLabel6 = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(jogLabel1), g_markup_printf_escaped(jogLabelMarkup1, "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel2), g_markup_printf_escaped(jogLabelMarkup2, "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel3), g_markup_printf_escaped(jogLabelMarkup3, "#000000"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel4), g_markup_printf_escaped(jogLabelMarkup4, "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel5), g_markup_printf_escaped(jogLabelMarkup5, "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel6), g_markup_printf_escaped(jogLabelMarkup6, "#AAAAAA"));
+//	gtk_label_set_markup(GTK_LABEL(jogLabel1), g_markup_printf_escaped(jogLabelMarkup1, "#AAAAAA", "   1X "));
+//	gtk_label_set_markup(GTK_LABEL(jogLabel2), g_markup_printf_escaped(jogLabelMarkup2, "#AAAAAA", " 10X "));
+//	gtk_label_set_markup(GTK_LABEL(jogLabel3), g_markup_printf_escaped(jogLabelMarkup3, "#AAAAAA", " 100X "));
+//	gtk_label_set_markup(GTK_LABEL(jogLabel4), g_markup_printf_escaped(jogLabelMarkup4, "#AAAAAA", " .001 "));
+//	gtk_label_set_markup(GTK_LABEL(jogLabel5), g_markup_printf_escaped(jogLabelMarkup5, "#AAAAAA", "  .01 "));
+//	gtk_label_set_markup(GTK_LABEL(jogLabel6), g_markup_printf_escaped(jogLabelMarkup6, "#AAAAAA", "   .1 "));
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel1, 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel2, 1, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel3, 2, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel4, 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel5, 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel6, 2, 1, 1, 1);
+	gtk_window_set_position(GTK_WINDOW(jogDialog), GTK_WIN_POS_CENTER_ALWAYS);
+	gtk_window_set_decorated(GTK_WINDOW(jogDialog), FALSE);
+
+	//Show main window
 	gtk_widget_show_all(mainWindow);
 
 	//Hide Cursor (Must be after window is shown
 	cursor = gdk_cursor_new(GDK_BLANK_CURSOR);
 	gdk_window_set_cursor(gtk_widget_get_window(GTK_WIDGET(mainWindow)), cursor);
 	g_object_unref(cursor);
-
 }
 
 void requestNumber() {
 	gtk_widget_show_all(numberDialog);
 	gint result = gtk_dialog_run(GTK_DIALOG(numberDialog));
 	gtk_widget_hide(numberDialog);
+}
+
+void showJogDialog() {
+	gtk_widget_show_all(jogDialog);
+	gint result = gtk_dialog_run(GTK_DIALOG(jogDialog));
+	gtk_widget_hide(jogDialog);
 }

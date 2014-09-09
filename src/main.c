@@ -142,6 +142,8 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 			requestNumber();
 		}
 		break;
+	case GDK_KEY_j:
+		showJogDialog();
 	case GDK_KEY_space:
 		if(STATE_IDLE == State) {
 			State = STATE_START;

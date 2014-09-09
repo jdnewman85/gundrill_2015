@@ -30,10 +30,20 @@ extern GtkWidget* spindleOverrideDisplay;
 extern GtkWidget* statusFrame;
 extern GtkWidget* statusFrameLabel;
 extern GtkWidget* statusDisplay;
-extern GdkRGBA numberDialogBgColor;
+extern GdkRGBA dialogBgColor;
 extern GtkWidget* numberDialog;
 extern GtkWidget* numberEntry;
 extern GtkWidget* numberEntryLabel;
+extern GtkWidget* jogDialog;
+extern GtkWidget* jogDialogFrame;
+extern GtkWidget* jogDialogFrameLabel;
+extern GtkWidget* jogDialogBox;
+extern GtkWidget* jogLabel1;
+extern GtkWidget* jogLabel2;
+extern GtkWidget* jogLabel3;
+extern GtkWidget* jogLabel4;
+extern GtkWidget* jogLabel5;
+extern GtkWidget* jogLabel6;
 
 extern gchar* positionDisplayMarkup;
 extern gchar* targetDisplayMarkup;
@@ -49,5 +59,6 @@ extern gint key_release_event(GtkWidget *widget, GdkEventKey *event);
 gboolean updateTimerEvent(gpointer userData);
 void createDisplay();
 void requestNumber();
+void showJogDialog();
 
 #endif //GUI_H
