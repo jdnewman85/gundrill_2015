@@ -64,6 +64,15 @@
 #define BACKLASH_MOVE_AMOUNT	500
 #define ZERO_OFFSET_TOLERANCE	2
 
+#define JOG_MODE_DEFAULT	-1
+#define JOG_MODE_NONE		-1
+#define JOG_MODE_1X		0
+#define JOG_MODE_10X		1
+#define JOG_MODE_100X		2
+#define JOG_MODE_001		3
+#define JOG_MODE_01		4
+#define JOG_MODE_1		5
+
 
 int Position;
 int ZeroOffset;
@@ -79,6 +88,8 @@ float PositionScale = 40960.0;
 
 int State;
 int InputType;
+
+int JogMode = JOG_MODE_DEFAULT;
 
 smint16 previousDrivePosition;
 
@@ -110,6 +121,51 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 		break;
 	}
 	InputType = INPUT_TYPE_NONE;
+}
+
+gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
+	printf("JOG KEY!: '%s'\n", gdk_keyval_name(event->keyval));
+	
+	switch(event->keyval) {
+	case GDK_KEY_Return:
+		JogMode = JOG_MODE_NONE;
+		gtk_dialog_response(GTK_DIALOG(jogDialog), 1);
+		break;
+	//1X
+	case GDK_KEY_KP_7:
+		JogMode = JOG_MODE_1X;
+		break;
+	//10X
+	case GDK_KEY_KP_8:
+		JogMode = JOG_MODE_10X;
+		break;
+	//100X
+	case GDK_KEY_KP_9:
+		JogMode = JOG_MODE_100X;
+		break;
+	//001
+	case GDK_KEY_KP_4:
+		JogMode = JOG_MODE_001;
+		break;
+	//01
+	case GDK_KEY_KP_5:
+		JogMode = JOG_MODE_01;
+		break;
+	//1
+	case GDK_KEY_KP_6:
+		JogMode = JOG_MODE_1;
+		break;
+	}
+
+	//Highlight current mode
+	int i;
+	for(i = 0; i < 6; i++) {
+		if(i == JogMode) {
+			gtk_label_set_markup(GTK_LABEL(jogLabel[i]), g_markup_printf_escaped(jogLabelMarkup[i], "#000000"));
+		}else {
+			gtk_label_set_markup(GTK_LABEL(jogLabel[i]), g_markup_printf_escaped(jogLabelMarkup[i], "#AAAAAA"));
+		}
+	}
 }
 
 gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
@@ -144,6 +200,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		break;
 	case GDK_KEY_j:
 		showJogDialog();
+		break;
 	case GDK_KEY_space:
 		if(STATE_IDLE == State) {
 			State = STATE_START;
@@ -330,6 +387,9 @@ int main(int argc, char** argv) {
 	//Numeric Entry Key Press Events
 	g_signal_connect(G_OBJECT(numberEntry), "activate", (GCallback)numericInputKeyPressEvent, NULL);
 	gtk_widget_set_events(GTK_WIDGET(numberEntry), GDK_KEY_PRESS_MASK);
+
+	g_signal_connect(G_OBJECT(jogDialog), "key_release_event", (GCallback)jogKey_release_event, NULL);
+	gtk_widget_set_events(GTK_WIDGET(jogDialog), GDK_KEY_RELEASE_MASK);
 
 	//Timer Test
 	g_timeout_add(TIME_UPDATE_DISPLAY, (GSourceFunc) updateDisplayEvent, NULL);

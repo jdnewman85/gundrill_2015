@@ -238,7 +238,7 @@ void createDisplay() {
 	jogLabel[5] = gtk_label_new(NULL);
 	gtk_label_set_markup(GTK_LABEL(jogLabel[0]), g_markup_printf_escaped(jogLabelMarkup[0], "#AAAAAA"));
 	gtk_label_set_markup(GTK_LABEL(jogLabel[1]), g_markup_printf_escaped(jogLabelMarkup[1], "#AAAAAA"));
-	gtk_label_set_markup(GTK_LABEL(jogLabel[2]), g_markup_printf_escaped(jogLabelMarkup[2], "#000000"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel[2]), g_markup_printf_escaped(jogLabelMarkup[2], "#AAAAAA"));
 	gtk_label_set_markup(GTK_LABEL(jogLabel[3]), g_markup_printf_escaped(jogLabelMarkup[3], "#AAAAAA"));
 	gtk_label_set_markup(GTK_LABEL(jogLabel[4]), g_markup_printf_escaped(jogLabelMarkup[4], "#AAAAAA"));
 	gtk_label_set_markup(GTK_LABEL(jogLabel[5]), g_markup_printf_escaped(jogLabelMarkup[5], "#AAAAAA"));
