@@ -47,7 +47,8 @@
 #define STATE_START		1
 #define STATE_FEED		2
 #define STATE_RETURN		3
-#define STATE_RETURN_ZERO 4
+#define STATE_RETURN_ZERO	4
+#define STATE_STOP		5
 
 #define SIMPLE_STATUS_MOVING	0
 #define SIMPLE_STATUS_ERROR	1
@@ -73,6 +74,18 @@
 #define JOG_MODE_01		4
 #define JOG_MODE_1		5
 
+#define JOG_FEEDRATE_1X		13
+#define JOG_FEEDRATE_10X	136
+#define JOG_FEEDRATE_100X	1366
+#define JOG_FEEDAMOUNT_001	1 //TODO Need actual scaled values
+#define JOG_FEEDAMOUNT_01	10
+#define JOG_FEEDAMOUNT_1	100
+#define JOG_POS_TARGET		100000000
+#define JOG_NEG_TARGET		-100000000
+#define JOG_FEEDRATE_STEP	1366
+
+#define STOP_DECEL_RATE		136 //Per cycle of STATE_STOP itteration
+
 
 int Position;
 int ZeroOffset;
@@ -90,12 +103,25 @@ int State;
 int InputType;
 
 int JogMode = JOG_MODE_DEFAULT;
+int Jogging = FALSE;
 
 smint16 previousDrivePosition;
 
 void sigIntHandler() {
 	gtk_main_quit();
 }
+
+void updatePosition() {
+	smint32 returnValue;
+	smint16 diff;
+
+	//TODO Status update here?
+	AxisStatus = smGetParam(AxisName, "ReturnDataPayload", &returnValue);
+	diff = returnValue-previousDrivePosition;
+	Position += diff;
+	previousDrivePosition = returnValue;
+}
+
 
 gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 	printf("Set Number!!\n");
@@ -123,38 +149,91 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 	InputType = INPUT_TYPE_NONE;
 }
 
+gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
+	switch(event->keyval) {
+	case GDK_KEY_KP_1:
+		if(!Jogging) {
+			switch(JogMode) {
+			//Continuous Jogs
+			case JOG_MODE_1X:
+				printf("JOGGING!\n");
+				Jogging = TRUE;
+				smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_1X);
+				AxisStatus = smCommand(AxisName, "ABSTARGET", JOG_POS_TARGET);
+				break;
+			case JOG_MODE_10X:
+				printf("JOGGING!\n");
+				Jogging = TRUE;
+				smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_10X);
+				AxisStatus = smCommand(AxisName, "ABSTARGET", JOG_POS_TARGET);
+				break;
+			case JOG_MODE_100X:
+				printf("JOGGING!\n");
+				Jogging = TRUE;
+				smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_100X);
+				AxisStatus = smCommand(AxisName, "ABSTARGET", JOG_POS_TARGET);
+				break;
+			}
+		}
+	}
+}
+
 gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
-	printf("JOG KEY!: '%s'\n", gdk_keyval_name(event->keyval));
+	printf("JOG RELEASE KEY!: '%s'\n", gdk_keyval_name(event->keyval));
 	
 	switch(event->keyval) {
 	case GDK_KEY_Return:
 		JogMode = JOG_MODE_NONE;
 		gtk_dialog_response(GTK_DIALOG(jogDialog), 1);
 		break;
-	//1X
+	//Continuous Jog
 	case GDK_KEY_KP_7:
 		JogMode = JOG_MODE_1X;
 		break;
-	//10X
 	case GDK_KEY_KP_8:
 		JogMode = JOG_MODE_10X;
 		break;
-	//100X
 	case GDK_KEY_KP_9:
 		JogMode = JOG_MODE_100X;
 		break;
+	//Step Jogs
 	//001
 	case GDK_KEY_KP_4:
 		JogMode = JOG_MODE_001;
+		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
 		break;
 	//01
 	case GDK_KEY_KP_5:
 		JogMode = JOG_MODE_01;
+		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
 		break;
 	//1
 	case GDK_KEY_KP_6:
 		JogMode = JOG_MODE_1;
+		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
 		break;
+	case GDK_KEY_KP_1:
+		switch(JogMode) {
+		//Continuous Jog
+		case JOG_MODE_1X:
+		case JOG_MODE_10X:
+		case JOG_MODE_100X:
+			printf("STOP!!!!\n");
+			State = STATE_STOP;
+			Jogging = FALSE;
+			break;
+		
+		//Step Jogs
+		case JOG_MODE_001:
+			AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_001);
+			break;
+		case JOG_MODE_01:
+			AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_01);
+			break;
+		case JOG_MODE_1:
+			AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_1);
+			break;
+		}
 	}
 
 	//Highlight current mode
@@ -247,6 +326,7 @@ float withOverride(float value, float override, float min, float max) {
 
 void doState() {
 	smint32 simpleStatus;
+	smint32 currentVelocity;
 
 	switch(State) {
 	case STATE_IDLE:
@@ -299,6 +379,21 @@ void doState() {
 			State = STATE_IDLE;
 		}
 		break;
+	case STATE_STOP:
+		//Slow to stop, set position, then idle
+		smGetParam(AxisName, "VelocityLimit", &currentVelocity);
+		if(currentVelocity > 1) {
+			if(currentVelocity > STOP_DECEL_RATE) {
+				smSetParam(AxisName, "VelocityLimit", currentVelocity-STOP_DECEL_RATE);
+			}else{
+				smSetParam(AxisName, "VelocityLimit", 1);
+			}
+		}else{
+			updatePosition;
+			AxisStatus = smCommand(AxisName, "INCTARGET", 0);
+			State = STATE_IDLE;
+		}
+		break;
 	}
 }
 
@@ -327,17 +422,6 @@ void initDrive() {
 
 	//TODO Remove?
 	//AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
-}
-
-void updatePosition() {
-	smint32 returnValue;
-	smint16 diff;
-
-	//TODO Status update here?
-	AxisStatus = smGetParam(AxisName, "ReturnDataPayload", &returnValue);
-	diff = returnValue-previousDrivePosition;
-	Position += diff;
-	previousDrivePosition = returnValue;
 }
 
 void updateDisplay() {
@@ -381,15 +465,16 @@ int main(int argc, char** argv) {
 
 	createDisplay();
 
-
 	init();
+	initDrive();
 
 	//Numeric Entry Key Press Events
 	g_signal_connect(G_OBJECT(numberEntry), "activate", (GCallback)numericInputKeyPressEvent, NULL);
 	gtk_widget_set_events(GTK_WIDGET(numberEntry), GDK_KEY_PRESS_MASK);
 
+	g_signal_connect(G_OBJECT(jogDialog), "key_press_event", (GCallback)jogKey_press_event, NULL);
 	g_signal_connect(G_OBJECT(jogDialog), "key_release_event", (GCallback)jogKey_release_event, NULL);
-	gtk_widget_set_events(GTK_WIDGET(jogDialog), GDK_KEY_RELEASE_MASK);
+	gtk_widget_set_events(GTK_WIDGET(jogDialog), GDK_KEY_PRESS_MASK|GDK_KEY_RELEASE_MASK);
 
 	//Timer Test
 	g_timeout_add(TIME_UPDATE_DISPLAY, (GSourceFunc) updateDisplayEvent, NULL);
