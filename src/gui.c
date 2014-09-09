@@ -56,22 +56,22 @@ gchar* targetFrameLabelMarkup	= "<span font='15' color='#ffffff'>[1] Target</spa
 gchar* targetDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
 gchar* toTargetFrameLabelMarkup	= "<span font='15' color='#ffffff'>ToTarget</span>";
 gchar* toTargetDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%2.4f</span>";
-gchar* feedrateFrameLabelMarkup	= "<span font='15' color='#ffffff'>[2] Feedrate - IPM  [/ *]</span>";
+gchar* feedrateFrameLabelMarkup	= "<span font='15' color='#ffffff'>[2] Feedrate IPM [/ *]</span>";
 gchar* feedrateDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%1.1f</span>";
 gchar* feedrateOverrideDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
-gchar* spindleFrameLabelMarkup	= "<span font='15' color='#ffffff'>[3] Spindle - RPM  [- +]</span>";
+gchar* spindleFrameLabelMarkup	= "<span font='15' color='#ffffff'>[3] Spindle RPM [- +]</span>";
 gchar* spindleDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%4d</span>";
 gchar* spindleOverrideDisplayMarkup	= "<span weight='bold' font='30' color='#ffffff'>%3d%%</span>";
 gchar* statusFrameLabelMarkup	= "<span font='15' color='#ffffff'>Status - [R]eset</span>";
 gchar* statusDisplayMarkup	= "<span weight='bold' font='15' color='#ffffff'>%s</span>";
 gchar* numberEntryLabelMarkup	= "<span weight='bold' font='15' color='#000000'>Enter a %s</span>";
 gchar* jogDialogFrameLabelMarkup= "<span weight='bold' font='40' color='#000000'>JOG</span>";
-gchar* jogLabelMarkup1		= "<span weight='bold' font='60' color='%s'>   1X </span>";
-gchar* jogLabelMarkup2		= "<span weight='bold' font='60' color='%s'>  10X </span>";
-gchar* jogLabelMarkup3		= "<span weight='bold' font='60' color='%s'> 100X </span>";
-gchar* jogLabelMarkup4		= "<span weight='bold' font='60' color='%s'> .001 </span>";
-gchar* jogLabelMarkup5		= "<span weight='bold' font='60' color='%s'>  .01 </span>";
-gchar* jogLabelMarkup6		= "<span weight='bold' font='60' color='%s'>   .1 </span>";
+gchar* jogLabelMarkup1		= "<span weight='bold' font='40' color='%s'>   1X </span>";
+gchar* jogLabelMarkup2		= "<span weight='bold' font='40' color='%s'>  10X </span>";
+gchar* jogLabelMarkup3		= "<span weight='bold' font='40' color='%s'> 100X </span>";
+gchar* jogLabelMarkup4		= "<span weight='bold' font='40' color='%s'> .001 </span>";
+gchar* jogLabelMarkup5		= "<span weight='bold' font='40' color='%s'>  .01 </span>";
+gchar* jogLabelMarkup6		= "<span weight='bold' font='40' color='%s'>   .1 </span>";
 
 void createDisplay() {
 	//Main Window
