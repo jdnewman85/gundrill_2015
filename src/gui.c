@@ -42,12 +42,7 @@ GtkWidget* jogDialog;
 GtkWidget* jogDialogFrame;
 GtkWidget* jogDialogFrameLabel;
 GtkWidget* jogDialogGrid;
-GtkWidget* jogLabel1;
-GtkWidget* jogLabel2;
-GtkWidget* jogLabel3;
-GtkWidget* jogLabel4;
-GtkWidget* jogLabel5;
-GtkWidget* jogLabel6;
+GtkWidget* jogLabel[6];
 
 gchar* mainFrameLabelMarkup	= "<span font='15' color='#ffffff'>Testers - Gun Drill</span>";
 gchar* positionFrameLabelMarkup	= "<span font='15' color='#ffffff'>Position</span>";
@@ -66,12 +61,12 @@ gchar* statusFrameLabelMarkup	= "<span font='15' color='#ffffff'>Status - [R]ese
 gchar* statusDisplayMarkup	= "<span weight='bold' font='15' color='#ffffff'>%s</span>";
 gchar* numberEntryLabelMarkup	= "<span weight='bold' font='15' color='#000000'>Enter a %s</span>";
 gchar* jogDialogFrameLabelMarkup= "<span weight='bold' font='40' color='#000000'>JOG</span>";
-gchar* jogLabelMarkup1		= "<span weight='bold' font='40' color='%s'>   1X </span>";
-gchar* jogLabelMarkup2		= "<span weight='bold' font='40' color='%s'>  10X </span>";
-gchar* jogLabelMarkup3		= "<span weight='bold' font='40' color='%s'> 100X </span>";
-gchar* jogLabelMarkup4		= "<span weight='bold' font='40' color='%s'> .001 </span>";
-gchar* jogLabelMarkup5		= "<span weight='bold' font='40' color='%s'>  .01 </span>";
-gchar* jogLabelMarkup6		= "<span weight='bold' font='40' color='%s'>   .1 </span>";
+gchar* jogLabelMarkup[6]	= {"<span weight='bold' font='40' color='%s'>   1X </span>", 
+				   "<span weight='bold' font='40' color='%s'>  10X </span>",
+				   "<span weight='bold' font='40' color='%s'> 100X </span>",
+				   "<span weight='bold' font='40' color='%s'> .001 </span>",
+				   "<span weight='bold' font='40' color='%s'>  .01 </span>",
+				   "<span weight='bold' font='40' color='%s'>   .1 </span>"};
 
 void createDisplay() {
 	//Main Window
@@ -235,30 +230,30 @@ void createDisplay() {
 	jogDialogGrid = gtk_grid_new();
 	gtk_container_add(GTK_CONTAINER(jogDialogFrame), jogDialogGrid);
 	//Jog Label
-	jogLabel1 = gtk_label_new(NULL);
-	jogLabel2 = gtk_label_new(NULL);
-	jogLabel3 = gtk_label_new(NULL);
-	jogLabel4 = gtk_label_new(NULL);
-	jogLabel5 = gtk_label_new(NULL);
-	jogLabel6 = gtk_label_new(NULL);
-	gtk_label_set_markup(GTK_LABEL(jogLabel1), g_markup_printf_escaped(jogLabelMarkup1, "#AAAAAA"));
-	gtk_label_set_markup(GTK_LABEL(jogLabel2), g_markup_printf_escaped(jogLabelMarkup2, "#AAAAAA"));
-	gtk_label_set_markup(GTK_LABEL(jogLabel3), g_markup_printf_escaped(jogLabelMarkup3, "#000000"));
-	gtk_label_set_markup(GTK_LABEL(jogLabel4), g_markup_printf_escaped(jogLabelMarkup4, "#AAAAAA"));
-	gtk_label_set_markup(GTK_LABEL(jogLabel5), g_markup_printf_escaped(jogLabelMarkup5, "#AAAAAA"));
-	gtk_label_set_markup(GTK_LABEL(jogLabel6), g_markup_printf_escaped(jogLabelMarkup6, "#AAAAAA"));
+	jogLabel[0] = gtk_label_new(NULL);
+	jogLabel[1] = gtk_label_new(NULL);
+	jogLabel[2] = gtk_label_new(NULL);
+	jogLabel[3] = gtk_label_new(NULL);
+	jogLabel[4] = gtk_label_new(NULL);
+	jogLabel[5] = gtk_label_new(NULL);
+	gtk_label_set_markup(GTK_LABEL(jogLabel[0]), g_markup_printf_escaped(jogLabelMarkup[0], "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel[1]), g_markup_printf_escaped(jogLabelMarkup[1], "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel[2]), g_markup_printf_escaped(jogLabelMarkup[2], "#000000"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel[3]), g_markup_printf_escaped(jogLabelMarkup[3], "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel[4]), g_markup_printf_escaped(jogLabelMarkup[4], "#AAAAAA"));
+	gtk_label_set_markup(GTK_LABEL(jogLabel[5]), g_markup_printf_escaped(jogLabelMarkup[5], "#AAAAAA"));
 //	gtk_label_set_markup(GTK_LABEL(jogLabel1), g_markup_printf_escaped(jogLabelMarkup1, "#AAAAAA", "   1X "));
 //	gtk_label_set_markup(GTK_LABEL(jogLabel2), g_markup_printf_escaped(jogLabelMarkup2, "#AAAAAA", " 10X "));
 //	gtk_label_set_markup(GTK_LABEL(jogLabel3), g_markup_printf_escaped(jogLabelMarkup3, "#AAAAAA", " 100X "));
 //	gtk_label_set_markup(GTK_LABEL(jogLabel4), g_markup_printf_escaped(jogLabelMarkup4, "#AAAAAA", " .001 "));
 //	gtk_label_set_markup(GTK_LABEL(jogLabel5), g_markup_printf_escaped(jogLabelMarkup5, "#AAAAAA", "  .01 "));
 //	gtk_label_set_markup(GTK_LABEL(jogLabel6), g_markup_printf_escaped(jogLabelMarkup6, "#AAAAAA", "   .1 "));
-	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel1, 0, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel2, 1, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel3, 2, 0, 1, 1);
-	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel4, 0, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel5, 1, 1, 1, 1);
-	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel6, 2, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[0], 0, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[1], 1, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[2], 2, 0, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[3], 0, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[4], 1, 1, 1, 1);
+	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[5], 2, 1, 1, 1);
 	gtk_window_set_position(GTK_WINDOW(jogDialog), GTK_WIN_POS_CENTER_ALWAYS);
 	gtk_window_set_decorated(GTK_WINDOW(jogDialog), FALSE);
 
