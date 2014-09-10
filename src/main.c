@@ -29,7 +29,7 @@
 #define POSITION_DEFAULT		0
 #define TARGET_DEFAULT			0
 #define TARGET_MIN			0
-#define TARGET_MAX			1000000
+#define TARGET_MAX			24*CNT_PER_REV*REV_PER_INCH//2147483647
 #define FEEDRATE_DEFAULT		0
 #define FEEDRATE_MAX			1366
 #define FEEDRATE_MIN			0
@@ -60,6 +60,7 @@
 #define STATE_RETURN_ZERO	4
 #define STATE_STOP		5
 #define STATE_WAIT_COMPLETE	6
+#define STATE_EMERGENCY_RETURN_START	7
 
 #define SIMPLE_STATUS_MOVING	0
 #define SIMPLE_STATUS_ERROR	1
@@ -296,7 +297,12 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	//printf("KEY!: '%s'\n", gdk_keyval_name(event->keyval));
 	switch(event->keyval) {
+	//Emergency Retract
 	case GDK_KEY_Escape:
+		State = STATE_EMERGENCY_RETURN_START;
+		break;
+	//Nice End
+	case GDK_KEY_F12:
 		sigIntHandler();
 		break;
 	//Set Target
@@ -435,6 +441,11 @@ void doState() {
 		if(SIMPLE_STATUS_IDLE == simpleStatus) {
 			State = STATE_IDLE;
 		}
+		break;
+	case STATE_EMERGENCY_RETURN_START:
+		//First, lets stop
+		AxisStatus = smCommand(AxisName, "ABSTARGET", Position);
+		State = STATE_FEED;
 		break;
 	}
 }
