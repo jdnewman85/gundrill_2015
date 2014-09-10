@@ -62,7 +62,8 @@
 #define SIMPLE_STATUS_ERROR	1
 #define SIMPLE_STATUS_IDLE	2
 
-#define TIME_UPDATE_DISPLAY	20
+#define TIME_UPDATE_DISPLAY	200
+#define TIME_UPDATE_POSITIONS	50
 #define TIME_UPDATE_STATE	250
 
 #define INPUT_TYPE_NONE		0
@@ -488,6 +489,12 @@ gboolean updateDisplayEvent(gpointer userData) {
 	return TRUE;
 }
 
+gboolean updatePositionEvent(gpointer userData) {
+	updatePosition();
+
+	return TRUE;
+}
+
 gboolean updateStateEvent(gpointer userData) {
 	doState();
 
@@ -520,6 +527,7 @@ int main(int argc, char** argv) {
 
 	//Timer Test
 	g_timeout_add(TIME_UPDATE_DISPLAY, (GSourceFunc) updateDisplayEvent, NULL);
+	g_timeout_add(TIME_UPDATE_POSITIONS, (GSourceFunc) updatePositionEvent, NULL);
 	g_timeout_add(TIME_UPDATE_STATE, (GSourceFunc) updateStateEvent, NULL);
 
 	
