@@ -2,7 +2,6 @@
 
 //TODO Should have a function to handle drive status for every function that can return it. If it returns bad, abort
 //TODO Reset for drive
-//TODO Fix ToGo
 //TODO Error better
 //TODO Feedhold?
 //TODO MIN MAX LIMIT
@@ -28,11 +27,10 @@
 #define CAPTURE_RAW_POSITION		25
 
 #define POSITION_DEFAULT		0
-#define TARGET_DEFAULT			20000
+#define TARGET_DEFAULT			0
 #define TARGET_MIN			0
 #define TARGET_MAX			1000000
-#define TOGO_DEFAULT			0
-#define FEEDRATE_DEFAULT		136
+#define FEEDRATE_DEFAULT		0
 #define FEEDRATE_MAX			1366
 #define FEEDRATE_MIN			0
 #define FEEDRATE_OVERRIDE_DEFAULT	100
@@ -48,7 +46,11 @@
 #define SPINDLE_OVERRIDE_INC		5
 #define STATUS_LENGTH			100
 
-#define POSITION_HOME			0
+#define CNT_PER_REV			4096.0
+#define REV_PER_INCH			20.0
+#define INCH_PER_REV			1.0/REV_PER_INCH
+#define VEL_PER_RPM			1266.0/1000.5
+
 #define FEEDRATE_RAPID			1366
 
 #define STATE_IDLE		0
@@ -84,12 +86,11 @@
 #define JOG_MODE_01		4
 #define JOG_MODE_1		5
 
-#define JOG_FEEDRATE_1X		130
-#define JOG_FEEDRATE_10X	1360
-#define JOG_FEEDRATE_100X	13660
-#define JOG_FEEDRATE_001	13660
-#define JOG_FEEDRATE_01		13660
-#define JOG_FEEDRATE_1		13660
+//Jog Feedrates/16384 = x/Set max feedrate
+//Used as ABSPOS in Velocity Mode
+#define JOG_FEEDRATE_1X		163
+#define JOG_FEEDRATE_10X	1638
+#define JOG_FEEDRATE_100X	16384
 #define JOG_FEEDAMOUNT_001	1 //TODO Need actual scaled values
 #define JOG_FEEDAMOUNT_01	10
 #define JOG_FEEDAMOUNT_1	100
@@ -106,19 +107,20 @@
 
 int Position;
 int Target;
-int ToGo;
 int Feedrate;
 int FeedrateOverride;
 int Spindle;
 int SpindleOverride;
 char Status[STATUS_LENGTH];
 
-float PositionScale = 40960.0;
+float CntPerInch = CNT_PER_REV * REV_PER_INCH;
+float VelPerRPM = VEL_PER_RPM;
+float VelPerIPM = REV_PER_INCH*VEL_PER_RPM;
 
 int State;
 int InputType;
 
-int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X, JOG_FEEDRATE_001, JOG_FEEDRATE_01, JOG_FEEDRATE_1};
+int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X};
 
 int JogMode = JOG_MODE_DEFAULT;
 int JogDirection = JOG_STOP;
@@ -149,12 +151,12 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 	//TODO Scaling
 	switch(InputType) {
 	case INPUT_TYPE_TARGET:
-		Target = atoll(gtk_entry_get_text(GTK_ENTRY(numberEntry)));
+		Target = (int)(atof(gtk_entry_get_text(GTK_ENTRY(numberEntry)))*CntPerInch);
 		if(Target > TARGET_MAX) {Target = TARGET_MAX;}
 		if(Target < TARGET_MIN) {Target = TARGET_MIN;}
 		break;
 	case INPUT_TYPE_FEEDRATE:
-		Feedrate = atoll(gtk_entry_get_text(GTK_ENTRY(numberEntry)));
+		Feedrate = (int)(atof(gtk_entry_get_text(GTK_ENTRY(numberEntry)))*VelPerIPM);
 		if(Feedrate > FEEDRATE_MAX) {Feedrate = FEEDRATE_MAX;}
 		if(Feedrate < FEEDRATE_MIN) {Feedrate = FEEDRATE_MIN;}
 		break;
@@ -205,7 +207,7 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 			//Was a continous jog button, do the actual jog
 			//printf("JOGGING!\n");
 			smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
-			smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_100X);
+			smSetParam(AxisName, "VelocityLimit", FEEDRATE_MAX);
 			AxisStatus = smCommand(AxisName, "ABSTARGET", JogFeedrate[JogMode]*JogDirection);
 		}
 
@@ -239,17 +241,17 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 		//001
 		case GDK_KEY_KP_4:
 			JogMode = JOG_MODE_001;
-			smSetParam(AxisName, "VelocityLimit", JogFeedrate[JogMode]);
+			smSetParam(AxisName, "VelocityLimit", FEEDRATE_MAX);
 			break;
 		//01
 		case GDK_KEY_KP_5:
 			JogMode = JOG_MODE_01;
-			smSetParam(AxisName, "VelocityLimit", JogFeedrate[JogMode]);
+			smSetParam(AxisName, "VelocityLimit", FEEDRATE_MAX);
 			break;
 		//1
 		case GDK_KEY_KP_6:
 			JogMode = JOG_MODE_1;
-			smSetParam(AxisName, "VelocityLimit", JogFeedrate[JogMode]);
+			smSetParam(AxisName, "VelocityLimit", FEEDRATE_MAX);
 			break;
 
 
@@ -371,7 +373,6 @@ float withOverride(float value, float override, float min, float max) {
 
 void doState() {
 	smint32 simpleStatus;
-	smint32 currentPosition;
 
 	switch(State) {
 	case STATE_IDLE:
@@ -379,9 +380,7 @@ void doState() {
 		break;
 	case STATE_START:
 		//Start part, and set into feed
-		//Set current position as 0, if too far away
-		//Set feedrate TODO Proper
-		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)); //TODO Scale
+		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX));
 		//TODO Set IO status
 		//Reset 0 to current location
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
@@ -425,7 +424,7 @@ void doState() {
 		}
 		break;
 	case STATE_STOP:
-		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_100X);
+		smSetParam(AxisName, "VelocityLimit", FEEDRATE_MAX);
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
 		AxisStatus = smCommand(AxisName, "ABSTARGET", 0);
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_POSITION);
@@ -443,7 +442,6 @@ void doState() {
 void init() {
 	Position = POSITION_DEFAULT;
 	Target = TARGET_DEFAULT;
-	ToGo = TOGO_DEFAULT;
 	Feedrate = FEEDRATE_DEFAULT;
 	FeedrateOverride = FEEDRATE_OVERRIDE_DEFAULT;
 	Spindle = SPINDLE_DEFAULT;
@@ -463,10 +461,10 @@ void initDrive() {
 
 void updateDisplay() {
 	//NOTE: CHECK DISPLAY PRINTF TYPES!
-	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, (Position)/1.0));
-	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target/1.0));
-	gtk_label_set_markup(GTK_LABEL(toTargetDisplay), g_markup_printf_escaped(toTargetDisplayMarkup, (Target-Position)/1.0));
-	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)));
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position/CntPerInch));
+	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target/CntPerInch));
+	gtk_label_set_markup(GTK_LABEL(toTargetDisplay), g_markup_printf_escaped(toTargetDisplayMarkup, (Target-Position)/CntPerInch));
+	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)/VelPerIPM));
 	gtk_label_set_markup(GTK_LABEL(feedrateOverrideDisplay), g_markup_printf_escaped(feedrateOverrideDisplayMarkup, FeedrateOverride));
 	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, (int)withOverride(Spindle, SpindleOverride, SPINDLE_MIN, SPINDLE_MAX)));
 	gtk_label_set_markup(GTK_LABEL(spindleOverrideDisplay), g_markup_printf_escaped(spindleOverrideDisplayMarkup, SpindleOverride));

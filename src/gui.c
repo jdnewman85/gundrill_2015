@@ -242,12 +242,6 @@ void createDisplay() {
 	gtk_label_set_markup(GTK_LABEL(jogLabel[3]), g_markup_printf_escaped(jogLabelMarkup[3], "#AAAAAA"));
 	gtk_label_set_markup(GTK_LABEL(jogLabel[4]), g_markup_printf_escaped(jogLabelMarkup[4], "#AAAAAA"));
 	gtk_label_set_markup(GTK_LABEL(jogLabel[5]), g_markup_printf_escaped(jogLabelMarkup[5], "#AAAAAA"));
-//	gtk_label_set_markup(GTK_LABEL(jogLabel1), g_markup_printf_escaped(jogLabelMarkup1, "#AAAAAA", "   1X "));
-//	gtk_label_set_markup(GTK_LABEL(jogLabel2), g_markup_printf_escaped(jogLabelMarkup2, "#AAAAAA", " 10X "));
-//	gtk_label_set_markup(GTK_LABEL(jogLabel3), g_markup_printf_escaped(jogLabelMarkup3, "#AAAAAA", " 100X "));
-//	gtk_label_set_markup(GTK_LABEL(jogLabel4), g_markup_printf_escaped(jogLabelMarkup4, "#AAAAAA", " .001 "));
-//	gtk_label_set_markup(GTK_LABEL(jogLabel5), g_markup_printf_escaped(jogLabelMarkup5, "#AAAAAA", "  .01 "));
-//	gtk_label_set_markup(GTK_LABEL(jogLabel6), g_markup_printf_escaped(jogLabelMarkup6, "#AAAAAA", "   .1 "));
 	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[0], 0, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[1], 1, 0, 1, 1);
 	gtk_grid_attach(GTK_GRID(jogDialogGrid), jogLabel[2], 2, 0, 1, 1);
@@ -268,6 +262,7 @@ void createDisplay() {
 
 void requestNumber() {
 	gtk_widget_show_all(numberDialog);
+	gtk_entry_set_text(GTK_ENTRY(numberEntry), "");
 	gint result = gtk_dialog_run(GTK_DIALOG(numberDialog));
 	gtk_widget_hide(numberDialog);
 }
