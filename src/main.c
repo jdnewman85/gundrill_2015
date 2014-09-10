@@ -24,6 +24,7 @@
 #define CONTROL_MODE_VELOCITY		2
 #define CONTROL_MODE_TORQUE		3
 
+#define CAPTURE_ACTUAL_POSITION		6
 #define CAPTURE_RAW_POSITION		25
 
 #define POSITION_DEFAULT		0
@@ -62,7 +63,7 @@
 #define SIMPLE_STATUS_ERROR	1
 #define SIMPLE_STATUS_IDLE	2
 
-#define TIME_UPDATE_DISPLAY	250
+#define TIME_UPDATE_DISPLAY	150
 #define TIME_UPDATE_POSITIONS	20
 #define TIME_UPDATE_STATE	250
 
@@ -104,7 +105,6 @@
 
 
 int Position;
-int ZeroOffset;
 int Target;
 int ToGo;
 int Feedrate;
@@ -173,8 +173,6 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 
 	//Only start a continous jog if not in a jog mode, or already in continous
 	switch(JogMode) {
-	case JOG_MODE_NONE:
-		//fallthrough
 	case JOG_MODE_1X:
 		//fallthrough
 	case JOG_MODE_10X:
@@ -355,7 +353,6 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 		break;
 	case GDK_KEY_z:
-		ZeroOffset = Position;
 		break;
 	}
 }
@@ -383,14 +380,14 @@ void doState() {
 	case STATE_START:
 		//Start part, and set into feed
 		//Set current position as 0, if too far away
-		if(abs(ZeroOffset-Position) > ZERO_OFFSET_TOLERANCE) {
-			ZeroOffset = Position;
-		}
 		//Set feedrate TODO Proper
 		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)); //TODO Scale
 		//TODO Set IO status
+		//Reset 0 to current location
+		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
+		smSetParam(AxisName, "ControlMode", CONTROL_MODE_POSITION);
 		//Move
-		AxisStatus = smCommand(AxisName, "ABSTARGET", Target+ZeroOffset);
+		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
 		State = STATE_FEED;
 		break;
 	case STATE_FEED:
@@ -403,7 +400,7 @@ void doState() {
 			//Good, TODO Dwell at all?
 			//Rapid back
 			smSetParam(AxisName, "VelocityLimit", FEEDRATE_RAPID);
-			AxisStatus = smCommand(AxisName, "ABSTARGET", ZeroOffset-BACKLASH_MOVE_AMOUNT);
+			AxisStatus = smCommand(AxisName, "ABSTARGET", -BACKLASH_MOVE_AMOUNT);
 			State = STATE_RETURN;
 		}
 		break;
@@ -413,7 +410,7 @@ void doState() {
 		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
 		if(SIMPLE_STATUS_IDLE == simpleStatus) {
 			//Complete
-			AxisStatus = smCommand(AxisName, "ABSTARGET", ZeroOffset);
+			AxisStatus = smCommand(AxisName, "ABSTARGET", 0);
 			State = STATE_RETURN_ZERO;
 		}
 		break;
@@ -451,9 +448,6 @@ void init() {
 	FeedrateOverride = FEEDRATE_OVERRIDE_DEFAULT;
 	Spindle = SPINDLE_DEFAULT;
 	SpindleOverride = SPINDLE_OVERRIDE_DEFAULT;
-
-	//Set current position as 0
-	ZeroOffset = Position;
 }
 
 void initDrive() {
@@ -461,7 +455,7 @@ void initDrive() {
 	AxisStatus=smCommand(AxisName, "TESTCOMMUNICATION", 0);
 
 	//Set ReturnData to position
-	smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_RAW_POSITION);
+	smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_ACTUAL_POSITION);
 
 	//TODO Remove?
 	//AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
@@ -469,7 +463,7 @@ void initDrive() {
 
 void updateDisplay() {
 	//NOTE: CHECK DISPLAY PRINTF TYPES!
-	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, (Position-ZeroOffset)/1.0));
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, (Position)/1.0));
 	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target/1.0));
 	gtk_label_set_markup(GTK_LABEL(toTargetDisplay), g_markup_printf_escaped(toTargetDisplayMarkup, (Target-Position)/1.0));
 	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)));
