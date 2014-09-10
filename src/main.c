@@ -62,8 +62,8 @@
 #define SIMPLE_STATUS_ERROR	1
 #define SIMPLE_STATUS_IDLE	2
 
-#define TIME_UPDATE_DISPLAY	200
-#define TIME_UPDATE_POSITIONS	50
+#define TIME_UPDATE_DISPLAY	250
+#define TIME_UPDATE_POSITIONS	20
 #define TIME_UPDATE_STATE	250
 
 #define INPUT_TYPE_NONE		0
@@ -142,7 +142,7 @@ void updatePosition() {
 
 
 gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
-	printf("Set Number!!\n");
+	//printf("Set Number!!\n");
 	gtk_dialog_response(GTK_DIALOG(numberDialog), 1);
 
 	//Actually set our data
@@ -194,7 +194,7 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 		default:
 			//If moving, stop
 			if(JOG_MODE_NONE != JogMode) {
-				printf("STOP DUE TO OTHER INPUT!!!!\n");
+				//printf("STOP DUE TO OTHER INPUT!!!!\n");
 				JogDirection = JOG_STOP;
 				State = STATE_STOP;
 			}
@@ -205,7 +205,7 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 	
 		if(JogDirection != previousJogDirection) {
 			//Was a continous jog button, do the actual jog
-			printf("JOGGING!\n");
+			//printf("JOGGING!\n");
 			smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
 			smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_100X);
 			AxisStatus = smCommand(AxisName, "ABSTARGET", JogFeedrate[JogMode]*JogDirection);
@@ -216,7 +216,7 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 }
 
 gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
-	printf("JOG RELEASE KEY!: '%s'\n", gdk_keyval_name(event->keyval));
+	//printf("JOG RELEASE KEY!: '%s'\n", gdk_keyval_name(event->keyval));
 	
 	if(JOG_STOP == JogDirection) {
 		switch(event->keyval) {
@@ -277,7 +277,7 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 			break;
 		}
 	}else { //Already jogging, don't get stuck moving
-		printf("STOP!!!!\n");
+		//printf("STOP!!!!\n");
 		JogDirection = JOG_STOP;
 		State = STATE_STOP;
 	}
@@ -294,7 +294,7 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 }
 
 gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
-	printf("KEY!: '%s'\n", gdk_keyval_name(event->keyval));
+	//printf("KEY!: '%s'\n", gdk_keyval_name(event->keyval));
 	switch(event->keyval) {
 	case GDK_KEY_Escape:
 		sigIntHandler();
@@ -504,7 +504,7 @@ gboolean updateStateEvent(gpointer userData) {
 int main(int argc, char** argv) {
 
 
-	printf("GunDrill Control\n");
+	//printf("GunDrill Control\n");
 
 	//SigInt Handler
 	signal(SIGINT, sigIntHandler);
@@ -534,6 +534,6 @@ int main(int argc, char** argv) {
 	//Main Loop
 	gtk_main();
 
-	printf("End\n");
+	//printf("End\n");
 	return 0;
 }
