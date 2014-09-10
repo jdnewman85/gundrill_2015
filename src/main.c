@@ -7,6 +7,7 @@
 //TODO Feedhold?
 //TODO MIN MAX LIMIT
 
+#include <stdlib.h> //abs()
 #include <time.h>
 #include <stdio.h>
 #include <signal.h>
@@ -49,6 +50,7 @@
 #define STATE_RETURN		3
 #define STATE_RETURN_ZERO	4
 #define STATE_STOP		5
+#define STATE_WAIT_COMPLETE	6
 
 #define SIMPLE_STATUS_MOVING	0
 #define SIMPLE_STATUS_ERROR	1
@@ -85,6 +87,7 @@
 #define JOG_FEEDRATE_STEP	1366
 
 #define STOP_DECEL_RATE		136 //Per cycle of STATE_STOP itteration
+#define STOP_TOL		10
 
 
 int Position;
@@ -106,6 +109,7 @@ int JogMode = JOG_MODE_DEFAULT;
 int Jogging = FALSE;
 
 smint16 previousDrivePosition;
+smint16 diff;
 
 void sigIntHandler() {
 	gtk_main_quit();
@@ -113,7 +117,6 @@ void sigIntHandler() {
 
 void updatePosition() {
 	smint32 returnValue;
-	smint16 diff;
 
 	//TODO Status update here?
 	AxisStatus = smGetParam(AxisName, "ReturnDataPayload", &returnValue);
@@ -175,6 +178,7 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 				break;
 			}
 		}
+		break;
 	}
 }
 
@@ -234,6 +238,7 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 			AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_1);
 			break;
 		}
+		break;
 	}
 
 	//Highlight current mode
@@ -326,7 +331,7 @@ float withOverride(float value, float override, float min, float max) {
 
 void doState() {
 	smint32 simpleStatus;
-	smint32 currentVelocity;
+	smint32 currentPosition;
 
 	switch(State) {
 	case STATE_IDLE:
@@ -335,7 +340,7 @@ void doState() {
 	case STATE_START:
 		//Start part, and set into feed
 		//Set current position as 0, if too far away
-		if(ZeroOffset-Position > ZERO_OFFSET_TOLERANCE || ZeroOffset-Position < -ZERO_OFFSET_TOLERANCE) {
+		if(abs(ZeroOffset-Position) > ZERO_OFFSET_TOLERANCE) {
 			ZeroOffset = Position;
 		}
 		//Set feedrate TODO Proper
@@ -380,17 +385,20 @@ void doState() {
 		}
 		break;
 	case STATE_STOP:
-		//Slow to stop, set position, then idle
-		smGetParam(AxisName, "VelocityLimit", &currentVelocity);
-		if(currentVelocity > 1) {
-			if(currentVelocity > STOP_DECEL_RATE) {
-				smSetParam(AxisName, "VelocityLimit", currentVelocity-STOP_DECEL_RATE);
-			}else{
-				smSetParam(AxisName, "VelocityLimit", 1);
-			}
-		}else{
+		smSetParam(AxisName, "VelocityLimit", 1);
+		if(abs(diff) < STOP_TOL) {
+			//Looks like we're setting still
+			printf("Prev: %d Current: %d Diff: %d\n", previousDrivePosition, Position, diff);
 			updatePosition;
-			AxisStatus = smCommand(AxisName, "INCTARGET", 0);
+			AxisStatus = smCommand(AxisName, "ABSTARGET", Position);
+			//smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
+			State = STATE_WAIT_COMPLETE;
+		}
+
+		break;
+	case STATE_WAIT_COMPLETE:
+		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
+		if(SIMPLE_STATUS_IDLE == simpleStatus) {
 			State = STATE_IDLE;
 		}
 		break;
