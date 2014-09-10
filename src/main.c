@@ -20,6 +20,12 @@
 #include "axis.h"
 #include "gui.h"
 
+#define CONTROL_MODE_POSITION		1
+#define CONTROL_MODE_VELOCITY		2
+#define CONTROL_MODE_TORQUE		3
+
+#define CAPTURE_RAW_POSITION		25
+
 #define POSITION_DEFAULT		0
 #define TARGET_DEFAULT			20000
 #define TARGET_MIN			0
@@ -76,15 +82,21 @@
 #define JOG_MODE_01		4
 #define JOG_MODE_1		5
 
-#define JOG_FEEDRATE_1X		13
-#define JOG_FEEDRATE_10X	136
-#define JOG_FEEDRATE_100X	1366
+#define JOG_FEEDRATE_1X		130
+#define JOG_FEEDRATE_10X	1360
+#define JOG_FEEDRATE_100X	13660
+#define JOG_FEEDRATE_001	13660
+#define JOG_FEEDRATE_01		13660
+#define JOG_FEEDRATE_1		13660
 #define JOG_FEEDAMOUNT_001	1 //TODO Need actual scaled values
 #define JOG_FEEDAMOUNT_01	10
 #define JOG_FEEDAMOUNT_1	100
 #define JOG_POS_TARGET		100000000
 #define JOG_NEG_TARGET		-100000000
-#define JOG_FEEDRATE_STEP	1366
+
+#define JOG_STOP		0
+#define JOG_FORWARD		1
+#define JOG_REVERSE		-1
 
 #define STOP_DECEL_RATE		136 //Per cycle of STATE_STOP itteration
 #define STOP_TOL		10
@@ -105,8 +117,10 @@ float PositionScale = 40960.0;
 int State;
 int InputType;
 
+int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X, JOG_FEEDRATE_001, JOG_FEEDRATE_01, JOG_FEEDRATE_1};
+
 int JogMode = JOG_MODE_DEFAULT;
-int Jogging = FALSE;
+int JogDirection = JOG_STOP;
 
 smint16 previousDrivePosition;
 smint16 diff;
@@ -153,31 +167,49 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 }
 
 gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
-	switch(event->keyval) {
-	case GDK_KEY_KP_1:
-		if(!Jogging) {
-			switch(JogMode) {
-			//Continuous Jogs
-			case JOG_MODE_1X:
-				printf("JOGGING!\n");
-				Jogging = TRUE;
-				smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_1X);
-				AxisStatus = smCommand(AxisName, "ABSTARGET", JOG_POS_TARGET);
-				break;
-			case JOG_MODE_10X:
-				printf("JOGGING!\n");
-				Jogging = TRUE;
-				smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_10X);
-				AxisStatus = smCommand(AxisName, "ABSTARGET", JOG_POS_TARGET);
-				break;
-			case JOG_MODE_100X:
-				printf("JOGGING!\n");
-				Jogging = TRUE;
-				smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_100X);
-				AxisStatus = smCommand(AxisName, "ABSTARGET", JOG_POS_TARGET);
-				break;
+	//Let's only send a new command to the drive if we change direction
+	int previousJogDirection = JogDirection;
+
+	//Only start a continous jog if not in a jog mode, or already in continous
+	switch(JogMode) {
+	case JOG_MODE_NONE:
+		//fallthrough
+	case JOG_MODE_1X:
+		//fallthrough
+	case JOG_MODE_10X:
+		//fallthrough
+	case JOG_MODE_100X:
+		switch(event->keyval) {
+		//and a continous jog button has been pushed
+		case GDK_KEY_KP_1:
+			//Then jog
+			JogDirection = JOG_FORWARD;
+			break;
+		case GDK_KEY_KP_3:
+			JogDirection = JOG_REVERSE;
+			break;
+		
+		//Other keys should also stop, jic
+		default:
+			//If moving, stop
+			if(JOG_MODE_NONE != JogMode) {
+				printf("STOP DUE TO OTHER INPUT!!!!\n");
+				JogDirection = JOG_STOP;
+				State = STATE_STOP;
 			}
+			//Any of those cases, we want to return
+			return;
+			break;
 		}
+	
+		if(JogDirection != previousJogDirection) {
+			//Was a continous jog button, do the actual jog
+			printf("JOGGING!\n");
+			smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
+			smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_100X);
+			AxisStatus = smCommand(AxisName, "ABSTARGET", JogFeedrate[JogMode]*JogDirection);
+		}
+
 		break;
 	}
 }
@@ -185,60 +217,67 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 	printf("JOG RELEASE KEY!: '%s'\n", gdk_keyval_name(event->keyval));
 	
-	switch(event->keyval) {
-	case GDK_KEY_Return:
-		JogMode = JOG_MODE_NONE;
-		gtk_dialog_response(GTK_DIALOG(jogDialog), 1);
-		break;
-	//Continuous Jog
-	case GDK_KEY_KP_7:
-		JogMode = JOG_MODE_1X;
-		break;
-	case GDK_KEY_KP_8:
-		JogMode = JOG_MODE_10X;
-		break;
-	case GDK_KEY_KP_9:
-		JogMode = JOG_MODE_100X;
-		break;
-	//Step Jogs
-	//001
-	case GDK_KEY_KP_4:
-		JogMode = JOG_MODE_001;
-		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
-		break;
-	//01
-	case GDK_KEY_KP_5:
-		JogMode = JOG_MODE_01;
-		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
-		break;
-	//1
-	case GDK_KEY_KP_6:
-		JogMode = JOG_MODE_1;
-		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
-		break;
-	case GDK_KEY_KP_1:
-		switch(JogMode) {
+	if(JOG_STOP == JogDirection) {
+		switch(event->keyval) {
+		//Other keys first
+		case GDK_KEY_Return:
+			JogMode = JOG_MODE_NONE;
+			gtk_dialog_response(GTK_DIALOG(jogDialog), 1);
+			break;
+
+
 		//Continuous Jog
-		case JOG_MODE_1X:
-		case JOG_MODE_10X:
-		case JOG_MODE_100X:
-			printf("STOP!!!!\n");
-			State = STATE_STOP;
-			Jogging = FALSE;
+		case GDK_KEY_KP_7:
+			JogMode = JOG_MODE_1X;
 			break;
-		
+		case GDK_KEY_KP_8:
+			JogMode = JOG_MODE_10X;
+			break;
+		case GDK_KEY_KP_9:
+			JogMode = JOG_MODE_100X;
+			break;
 		//Step Jogs
-		case JOG_MODE_001:
-			AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_001);
+		//001
+		case GDK_KEY_KP_4:
+			JogMode = JOG_MODE_001;
+			smSetParam(AxisName, "VelocityLimit", JogFeedrate[JogMode]);
 			break;
-		case JOG_MODE_01:
-			AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_01);
+		//01
+		case GDK_KEY_KP_5:
+			JogMode = JOG_MODE_01;
+			smSetParam(AxisName, "VelocityLimit", JogFeedrate[JogMode]);
 			break;
-		case JOG_MODE_1:
-			AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_1);
+		//1
+		case GDK_KEY_KP_6:
+			JogMode = JOG_MODE_1;
+			smSetParam(AxisName, "VelocityLimit", JogFeedrate[JogMode]);
+			break;
+
+
+		//Actual Jog buttons
+		case GDK_KEY_KP_1:
+			//fallthrough
+		case GDK_KEY_KP_3:
+			if(GDK_KEY_KP_1 == event->keyval) {JogDirection = JOG_FORWARD;}else{JogDirection = JOG_REVERSE;}
+
+			switch(JogMode) {
+			//Step Jogs
+			case JOG_MODE_001:
+				AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_001*JogDirection);
+				break;
+			case JOG_MODE_01:
+				AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_01*JogDirection);
+				break;
+			case JOG_MODE_1:
+				AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_1*JogDirection);
+				break;
+			}
 			break;
 		}
-		break;
+	}else { //Already jogging, don't get stuck moving
+		printf("STOP!!!!\n");
+		JogDirection = JOG_STOP;
+		State = STATE_STOP;
 	}
 
 	//Highlight current mode
@@ -385,16 +424,11 @@ void doState() {
 		}
 		break;
 	case STATE_STOP:
-		smSetParam(AxisName, "VelocityLimit", 1);
-		if(abs(diff) < STOP_TOL) {
-			//Looks like we're setting still
-			printf("Prev: %d Current: %d Diff: %d\n", previousDrivePosition, Position, diff);
-			updatePosition;
-			AxisStatus = smCommand(AxisName, "ABSTARGET", Position);
-			//smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_STEP);
-			State = STATE_WAIT_COMPLETE;
-		}
-
+		smSetParam(AxisName, "VelocityLimit", JOG_FEEDRATE_100X);
+		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
+		AxisStatus = smCommand(AxisName, "ABSTARGET", 0);
+		smSetParam(AxisName, "ControlMode", CONTROL_MODE_POSITION);
+		State = STATE_IDLE;
 		break;
 	case STATE_WAIT_COMPLETE:
 		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
@@ -422,11 +456,8 @@ void initDrive() {
 	//Test Comminications
 	AxisStatus=smCommand(AxisName, "TESTCOMMUNICATION", 0);
 
-	//TODO REMOVE Velocity should be handled elsewhere unless this is needed for homing
-//	smSetParam(AxisName, "VelocityLimit", 1366);
-
 	//Set ReturnData to position
-	smSetParam(AxisName, "ReturnDataPayloadType", 6); //TODO 6 Should be a constant
+	smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_RAW_POSITION);
 
 	//TODO Remove?
 	//AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
