@@ -272,6 +272,7 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 				AxisStatus = smCommand(AxisName, "INCTARGET", JOG_FEEDAMOUNT_1*JogDirection);
 				break;
 			}
+			JogDirection = JOG_STOP;
 			break;
 		}
 	}else { //Already jogging, don't get stuck moving
@@ -322,7 +323,9 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		}
 		break;
 	case GDK_KEY_j:
-		showJogDialog();
+		if(STATE_IDLE == State) {
+			showJogDialog();
+		}
 		break;
 	case GDK_KEY_space:
 		if(STATE_IDLE == State) {
