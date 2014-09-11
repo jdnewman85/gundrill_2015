@@ -170,10 +170,10 @@ void initDrive() {
 
 	//Test Comminications
 	do {
+		setDriveOnOff(0);
+		sleep(1);
+		setDriveOnOff(1);
 		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
-		sleep(1);
-		smCloseDevices();
-		sleep(1);
 		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 	}while(AxisStatus != SM_OK);
 
@@ -204,7 +204,6 @@ int main(int argc, char** argv) {
 	init();
 
 	openIO();
-	setDriveOnOff(1);
 	
 	initDrive();
 
