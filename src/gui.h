@@ -56,5 +56,6 @@ gboolean updateTimerEvent(gpointer userData);
 void createDisplay();
 void requestNumber();
 void showJogDialog();
+void updateDisplay();
 
 #endif //GUI_H

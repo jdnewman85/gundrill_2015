@@ -3,6 +3,9 @@
 #include <gtk/gtk.h>
 #include "SimpleMotion/simplemotion.h"
 #include "SimpleMotion/vsd_cmd.h"
+#include "main.h"
+#include "axis.h"
+#include "constant.h"
 #include "gui.h"
 
 //Globals
@@ -272,3 +275,19 @@ void showJogDialog() {
 	gint result = gtk_dialog_run(GTK_DIALOG(jogDialog));
 	gtk_widget_hide(jogDialog);
 }
+
+void updateDisplay() {
+	//NOTE: CHECK DISPLAY PRINTF TYPES!
+	gtk_label_set_markup(GTK_LABEL(positionDisplay), g_markup_printf_escaped(positionDisplayMarkup, Position/CntPerInch));
+	gtk_label_set_markup(GTK_LABEL(targetDisplay), g_markup_printf_escaped(targetDisplayMarkup, Target/CntPerInch));
+	gtk_label_set_markup(GTK_LABEL(toTargetDisplay), g_markup_printf_escaped(toTargetDisplayMarkup, (Target-Position)/CntPerInch));
+	gtk_label_set_markup(GTK_LABEL(feedrateDisplay), g_markup_printf_escaped(feedrateDisplayMarkup, withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX)/VelPerIPM));
+	gtk_label_set_markup(GTK_LABEL(feedrateOverrideDisplay), g_markup_printf_escaped(feedrateOverrideDisplayMarkup, FeedrateOverride));
+	gtk_label_set_markup(GTK_LABEL(spindleDisplay), g_markup_printf_escaped(spindleDisplayMarkup, (int)withOverride(Spindle, SpindleOverride, SPINDLE_MIN, SPINDLE_MAX)));
+	gtk_label_set_markup(GTK_LABEL(spindleOverrideDisplay), g_markup_printf_escaped(spindleOverrideDisplayMarkup, SpindleOverride));
+
+	//Status
+	sprintf(Status, "Drive: %s", statusString(AxisStatus));
+	gtk_label_set_markup(GTK_LABEL(statusDisplay), g_markup_printf_escaped(statusDisplayMarkup, Status));
+}
+
