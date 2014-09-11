@@ -17,8 +17,6 @@
 #include "SimpleMotion/simplemotion_private.h"
 #include "SimpleMotion/vsd_cmd.h"
 
-#include "pifacedigital.h"
-
 #include "axis.h"
 #include "gui.h"
 #include "aux.h"

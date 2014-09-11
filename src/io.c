@@ -12,6 +12,8 @@ void setDriveOnOff(int state) {
 
 #else //__arm__
 #include <stdio.h>
+#include "pifacedigital.h"
+
 
 void openIO() {
 	printf("openIO()\n");
