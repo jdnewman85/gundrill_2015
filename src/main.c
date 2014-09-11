@@ -137,15 +137,12 @@ void doState() {
 		State = STATE_FEED;
 		break;
 	case STATE_OVERFLOW:
-		//First, lets stop
-		AxisStatus = smCommand(AxisName, "ABSTARGET", Position);
-		//Set IO //Handled in STATE_FEED
-		//setOutput(OUTPUT_CYCLE_START, 0);
-		//setOutput(OUTPUT_FEED_FORWARD, 0);
-		State = STATE_FEED;
+		State = STATE_EMERGENCY_RETURN_START;
 		break;
 	case STATE_E_RETRACTED:
-		//Do nothing till reset
+		if(!ERetracted) {
+			State = STATE_IDLE;
+		}
 		break;
 	}
 
@@ -173,9 +170,9 @@ void initDrive() {
 
 	//Test Comminications
 	do {
-		smCloseDevices();
-		sleep(1);
 		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
+		sleep(1);
+		smCloseDevices();
 		sleep(1);
 		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 	}while(AxisStatus != SM_OK);
