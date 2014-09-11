@@ -16,6 +16,9 @@
 #include "SimpleMotion/simplemotion.h"
 #include "SimpleMotion/simplemotion_private.h"
 #include "SimpleMotion/vsd_cmd.h"
+
+#include "pifacedigital.h"
+
 #include "axis.h"
 #include "gui.h"
 #include "aux.h"
@@ -44,6 +47,8 @@ int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X};
 
 int JogMode = JOG_MODE_DEFAULT;
 int JogDirection = JOG_STOP;
+
+int piFaceHW_Addr = 0;
 
 void doState() {
 	smint32 simpleStatus;
@@ -152,6 +157,9 @@ int main(int argc, char** argv) {
 	createDisplay();
 
 	init();
+	pifacedigital_open(piFaceHW_Addr);
+	pifacedigital_write_bit(1, 0, OUTPUT, piFaceHW_Addr);
+	
 	initDrive();
 
 	//Numeric Entry Key Press Events
