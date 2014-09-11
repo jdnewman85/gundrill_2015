@@ -10,7 +10,9 @@ pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 pkg_check_modules(GLIB_PKG REQUIRED glib-2.0)
 
 set(PIFACE_LIBRARY_DIRS ${CMAKE_SOURCE_DIR}/lib/libmcp23s17 ${CMAKE_SOURCE_DIR}/lib/libpifacedigital)
-#set(PIFACE_LIBRARIES pifacedigital mcp23s17)
+if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "armv6l")
+	set(PIFACE_LIBRARIES pifacedigital mcp23s17)
+endif()
 
 include_directories(${GLIB_PKG_INCLUDE_DIRS} ${GTK3_INCLUDE_DIRS} ${GUNDRILL_SOURCE_DIR}/include)
 link_directories(${GLIB_PKG_LIBRARY_DIRS} ${GTK3_LIBRARY_DIRS} ${CMAKE_SOURCE_DIR}/lib ${PIFACE_LIBRARY_DIRS})

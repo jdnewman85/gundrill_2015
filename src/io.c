@@ -2,6 +2,9 @@
 
 #ifdef __arm__
 
+#include "pifacedigital.h"
+int piFaceHW_Addr = 0;
+
 void openIO() {
 	pifacedigital_open(piFaceHW_Addr);
 }
@@ -12,8 +15,6 @@ void setDriveOnOff(int state) {
 
 #else //__arm__
 #include <stdio.h>
-#include "pifacedigital.h"
-
 
 void openIO() {
 	printf("openIO()\n");

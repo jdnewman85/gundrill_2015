@@ -47,8 +47,6 @@ int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X};
 int JogMode = JOG_MODE_DEFAULT;
 int JogDirection = JOG_STOP;
 
-int piFaceHW_Addr = 0;
-
 void doState() {
 	smint32 simpleStatus;
 
