@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <gtk/gtk.h>
 #include "SimpleMotion/simplemotion.h"
 #include "SimpleMotion/simplemotion_private.h"
@@ -7,6 +8,7 @@
 #include "gui.h"
 #include "main.h"
 #include "event.h"
+#include "aux.h"
 
 gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 	//printf("Set Number!!\n");
@@ -32,6 +34,7 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 		break;
 	}
 	InputType = INPUT_TYPE_NONE;
+	return 0;
 }
 
 gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
@@ -64,7 +67,7 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 				State = STATE_STOP;
 			}
 			//Any of those cases, we want to return
-			return;
+			return 0;
 			break;
 		}
 	
@@ -78,6 +81,8 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 
 		break;
 	}
+
+	return 0;
 }
 
 gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
@@ -156,6 +161,8 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 			gtk_label_set_markup(GTK_LABEL(jogLabel[i]), g_markup_printf_escaped(jogLabelMarkup[i], "#AAAAAA"));
 		}
 	}
+
+	return 0;
 }
 
 gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
@@ -227,6 +234,8 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	case GDK_KEY_z:
 		break;
 	}
+
+	return 0;
 }
 
 gboolean updateDisplayEvent(gpointer userData) {

@@ -23,4 +23,7 @@ extern int JogFeedrate[];
 extern int JogMode;
 extern int JogDirection;
 
+void doState();
+void init();
+void initDrive();
 #endif //MAIN_H

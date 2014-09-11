@@ -119,13 +119,14 @@ SM_STATUS smGetDevice( SM_DEVICE **dev, const char *axisname )
     *dev=&smDevice[i];
 
     //send NOP commands to flush incorrect return data out (2 first SPI commands)
-    SM_STATUS stat;
+    //SM_STATUS stat;
     smuint32 retdata;
     ignorecrc=smtrue;
     smRawCmd( axisname, CMD_NOP, 0, &retdata);//no guarantee on return data correctness
     smRawCmd( axisname, CMD_NOP, 0, &retdata);//no guarantee on return data correctness
     ignorecrc=smfalse;
-    stat=smRawCmd( axisname, CMD_NOP, 0, &retdata);//should have valid return data now and after this
+    //stat=smRawCmd( axisname, CMD_NOP, 0, &retdata);//should have valid return data now and after this
+    smRawCmd( axisname, CMD_NOP, 0, &retdata);//should have valid return data now and after this
 
     return SM_OK;
 }

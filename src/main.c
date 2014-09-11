@@ -23,6 +23,7 @@
 #include "gui.h"
 #include "aux.h"
 #include "event.h"
+#include "io.h"
 
 #include "constant.h"
 #include "main.h"
@@ -157,8 +158,9 @@ int main(int argc, char** argv) {
 	createDisplay();
 
 	init();
-	pifacedigital_open(piFaceHW_Addr);
-	pifacedigital_write_bit(1, 0, OUTPUT, piFaceHW_Addr);
+
+	openIO();
+	setDriveOnOff(1);
 	
 	initDrive();
 

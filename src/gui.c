@@ -7,6 +7,8 @@
 #include "axis.h"
 #include "constant.h"
 #include "gui.h"
+#include "aux.h"
+
 
 //Globals
 GtkWidget* mainWindow;
@@ -266,13 +268,13 @@ void createDisplay() {
 void requestNumber() {
 	gtk_widget_show_all(numberDialog);
 	gtk_entry_set_text(GTK_ENTRY(numberEntry), "");
-	gint result = gtk_dialog_run(GTK_DIALOG(numberDialog));
+	gtk_dialog_run(GTK_DIALOG(numberDialog));
 	gtk_widget_hide(numberDialog);
 }
 
 void showJogDialog() {
 	gtk_widget_show_all(jogDialog);
-	gint result = gtk_dialog_run(GTK_DIALOG(jogDialog));
+	gtk_dialog_run(GTK_DIALOG(jogDialog));
 	gtk_widget_hide(jogDialog);
 }
 
