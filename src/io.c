@@ -15,11 +15,11 @@ void setDriveOnOff(int state) {
 }
 
 void setOutput(int output, int state) {
-	pifacedigital_write_bit(state, output, OUTPUT, piFaceHW_addr);
+	pifacedigital_write_bit(state, output, OUTPUT, piFaceHW_Addr);
 }
 
 int readInput(int input) {
-	return pifacedigital_read_bit(input, INPUT, piFaceHW_addr);
+	return pifacedigital_read_bit(input, INPUT, piFaceHW_Addr);
 }
 
 #else //__arm__
