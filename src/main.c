@@ -48,6 +48,8 @@ int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X};
 int JogMode = JOG_MODE_DEFAULT;
 int JogDirection = JOG_STOP;
 
+int ERetracted = FALSE;
+
 void doState() {
 	smint32 simpleStatus;
 
@@ -105,7 +107,11 @@ void doState() {
 			//TODO Parts counter?
 			//Set IO
 			setOutput(OUTPUT_RAPID_RETRACT, 1);
-			State = STATE_IDLE;
+			if(!ERetracted) {
+				State = STATE_IDLE;
+			}else {
+				State = STATE_E_RETRACTED;
+			}
 		}
 		break;
 	case STATE_STOP:
@@ -127,6 +133,7 @@ void doState() {
 		//Set IO //Handled in STATE_FEED
 		//setOutput(OUTPUT_CYCLE_START, 0);
 		//setOutput(OUTPUT_FEED_FORWARD, 0);
+		ERetracted = TRUE;
 		State = STATE_FEED;
 		break;
 	case STATE_OVERFLOW:
@@ -137,6 +144,18 @@ void doState() {
 		//setOutput(OUTPUT_FEED_FORWARD, 0);
 		State = STATE_FEED;
 		break;
+	case STATE_E_RETRACTED:
+		//Do nothing till reset
+		break;
+	}
+
+
+	//Check IO
+	if(!ERetracted) {
+		if(!readInput(INPUT_RAPID_RETRACT)) {
+			//Rapid retract
+			State = STATE_EMERGENCY_RETURN_START;
+		}
 	}
 }
 

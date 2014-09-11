@@ -23,6 +23,8 @@ extern int JogFeedrate[];
 extern int JogMode;
 extern int JogDirection;
 
+extern int ERetracted;
+
 void doState();
 void init();
 void initDrive();

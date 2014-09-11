@@ -230,6 +230,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		break;
 	case GDK_KEY_r:
 		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
+		ERetracted = FALSE;
 		break;
 	case GDK_KEY_z:
 		break;

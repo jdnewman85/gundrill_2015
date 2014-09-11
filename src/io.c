@@ -18,6 +18,10 @@ void setOutput(int output, int state) {
 	pifacedigital_write_bit(state, output, OUTPUT, piFaceHW_addr);
 }
 
+int readInput(int input) {
+	return pifacedigital_read_bit(input, INPUT, piFaceHW_addr);
+}
+
 #else //__arm__
 #include <stdio.h>
 
@@ -31,5 +35,10 @@ void setDriveOnOff(int state) {
 
 void setOutput(int output, int state) {
 	printf("setOutput(%d, %d)\n", output, state);
+}
+
+int readInput(int input) {
+	printf("readInput(%d)\n", input);
+	return 1;
 }
 #endif
