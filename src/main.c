@@ -135,8 +135,11 @@ void initDrive() {
 
 	//Test Comminications
 	do {
+		smCloseDevices();
+		sleep(1);
 		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
 		sleep(1);
+		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 	}while(AxisStatus != SM_OK);
 
 
