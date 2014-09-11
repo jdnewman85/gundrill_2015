@@ -48,7 +48,8 @@ int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X};
 int JogMode = JOG_MODE_DEFAULT;
 int JogDirection = JOG_STOP;
 
-int ERetracted = FALSE;
+char* StatusText = "";
+char* ErrorText = "";
 
 void doState() {
 	smint32 simpleStatus;
@@ -58,19 +59,20 @@ void doState() {
 		setOutput(OUTPUT_FEED_FORWARD, 0);
 		setOutput(OUTPUT_CYCLE_START, 0);
 		setOutput(OUTPUT_RAPID_RETRACT, 0);
+		StatusText = "";
 		break;
 	case STATE_START:
 		//Start part, and set into feed
 		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX));
 		//Set IO
 		setOutput(OUTPUT_CYCLE_START, 1);
+		setOutput(OUTPUT_FEED_FORWARD, 1);
 		//Reset 0 to current location
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_POSITION);
-		//Set IO
-		setOutput(OUTPUT_FEED_FORWARD, 1);
 		//Move
 		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
+		StatusText = "Feeding";
 		State = STATE_FEED;
 		break;
 	case STATE_FEED:
@@ -87,6 +89,7 @@ void doState() {
 			//Rapid back
 			smSetParam(AxisName, "VelocityLimit", FEEDRATE_RAPID);
 			AxisStatus = smCommand(AxisName, "ABSTARGET", -BACKLASH_MOVE_AMOUNT);
+			StatusText = "Returning";
 			State = STATE_RETURN;
 		}
 		break;
@@ -97,6 +100,7 @@ void doState() {
 		if(SIMPLE_STATUS_IDLE == simpleStatus) {
 			//Complete
 			AxisStatus = smCommand(AxisName, "ABSTARGET", 0);
+			StatusText = "Backlash Comp";
 			State = STATE_RETURN_ZERO;
 		}
 		break;
@@ -109,10 +113,10 @@ void doState() {
 			//TODO Parts counter?
 			//Set IO
 			setOutput(OUTPUT_RAPID_RETRACT, 1);
-			if(!ERetracted) {
+			if(!ErrorText) {
 				State = STATE_IDLE;
 			}else {
-				State = STATE_E_RETRACTED;
+				State = STATE_ERROR;
 			}
 		}
 		break;
@@ -135,17 +139,16 @@ void doState() {
 		//Set IO //Handled in STATE_FEED
 		//setOutput(OUTPUT_CYCLE_START, 0);
 		//setOutput(OUTPUT_FEED_FORWARD, 0);
-		ERetracted = TRUE;
 		State = STATE_FEED;
 		break;
 	case STATE_OVERFLOW:
 		State = STATE_EMERGENCY_RETURN_START;
 		break;
-	case STATE_E_RETRACTED:
+	case STATE_ERROR:
 		setOutput(OUTPUT_FEED_FORWARD, 0);
 		setOutput(OUTPUT_CYCLE_START, 0);
 		setOutput(OUTPUT_RAPID_RETRACT, 0);
-		if(!ERetracted) {
+		if(!ErrorText) {
 			State = STATE_IDLE;
 		}
 		break;
@@ -153,12 +156,18 @@ void doState() {
 
 
 	//Check IO
-	if(!ERetracted) {
-		if(!readInput(INPUT_RAPID_RETRACT)) {
-			//Rapid retract
-			State = STATE_EMERGENCY_RETURN_START;
-		}
+	if(!readInput(INPUT_RAPID_RETRACT)) {
+		//Rapid retract
+		ErrorText = "EMERGENCY RETRACT SWITCH";
+		State = STATE_EMERGENCY_RETURN_START;
 	}
+	if(!readInput(INPUT_OVERFLOW)) {
+		//Rapid retract
+		ErrorText = "OIL TANK FULL";
+		State = STATE_EMERGENCY_RETURN_START;
+	}
+
+	//TODO Check drive error bits
 }
 
 void init() {

@@ -24,6 +24,8 @@ extern int JogMode;
 extern int JogDirection;
 
 extern int ERetracted;
+extern char* StatusText;
+extern char* ErrorText;
 
 void doState();
 void init();
