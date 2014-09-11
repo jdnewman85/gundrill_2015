@@ -41,7 +41,7 @@ float CntPerInch = CNT_PER_REV * REV_PER_INCH;
 float VelPerRPM = VEL_PER_RPM;
 float VelPerIPM = REV_PER_INCH*VEL_PER_RPM;
 
-int State;
+int State = STATE_STARTUP;
 
 int JogFeedrate[] = {JOG_FEEDRATE_1X, JOG_FEEDRATE_10X, JOG_FEEDRATE_100X};
 
@@ -55,6 +55,9 @@ void doState() {
 	smint32 simpleStatus;
 
 	switch(State) {
+	case STATE_STARTUP:
+		StatusText = "Startup";
+		break;
 	case STATE_IDLE:
 		setOutput(OUTPUT_FEED_FORWARD, 0);
 		setOutput(OUTPUT_CYCLE_START, 0);
@@ -156,15 +159,29 @@ void doState() {
 
 
 	//Check IO
-	if(!readInput(INPUT_RAPID_RETRACT)) {
-		//Rapid retract
-		ErrorText = "EMERGENCY RETRACT SWITCH";
-		State = STATE_EMERGENCY_RETURN_START;
-	}
 	if(!readInput(INPUT_OVERFLOW)) {
 		//Rapid retract
 		ErrorText = "OIL TANK FULL";
 		State = STATE_EMERGENCY_RETURN_START;
+	}
+	if(!readInput(INPUT_RAPID_RETRACT)) {
+		switch(State) {
+		case STATE_IDLE:
+			//This is fine, ignore
+			break;
+		case STATE_ERROR:
+			//Reset Errors if possible
+			ErrorText = NULL;
+			break;
+		case STATE_STARTUP:
+			//Enable Running
+			State = STATE_IDLE;
+			break;
+		default:
+			//Reset while running, Rapid retract
+			ErrorText = "EMERGENCY RETRACT WHILE RUNNING";
+			State = STATE_EMERGENCY_RETURN_START;
+		}
 	}
 
 	//TODO Check drive error bits
