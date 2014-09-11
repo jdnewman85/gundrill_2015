@@ -55,7 +55,9 @@ void doState() {
 
 	switch(State) {
 	case STATE_IDLE:
-		//Check for START? TODO?
+		setOutput(OUTPUT_FEED_FORWARD, 0);
+		setOutput(OUTPUT_CYCLE_START, 0);
+		setOutput(OUTPUT_RAPID_RETRACT, 0);
 		break;
 	case STATE_START:
 		//Start part, and set into feed
@@ -140,6 +142,9 @@ void doState() {
 		State = STATE_EMERGENCY_RETURN_START;
 		break;
 	case STATE_E_RETRACTED:
+		setOutput(OUTPUT_FEED_FORWARD, 0);
+		setOutput(OUTPUT_CYCLE_START, 0);
+		setOutput(OUTPUT_RAPID_RETRACT, 0);
 		if(!ERetracted) {
 			State = STATE_IDLE;
 		}
@@ -170,11 +175,12 @@ void initDrive() {
 
 	//Test Comminications
 	do {
-		setDriveOnOff(0);
+		setOutput(OUTPUT_DRIVE_ON, 0);
 		sleep(1);
-		setDriveOnOff(1);
+		setOutput(OUTPUT_DRIVE_ON, 1);
+		sleep(4);
+		smCloseDevices();
 		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
-		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 	}while(AxisStatus != SM_OK);
 
 
@@ -182,6 +188,32 @@ void initDrive() {
 		AxisStatus = smGetParam(AxisName, "StatusBits", &statusBits);
 		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 	}while(!(statusBits & STAT_SERVO_READY));
+
+//	do{
+////		setDriveOnOff(0);
+//		setOutput(OUTPUT_DRIVE_ON, 0);
+//		sleep(1);
+////		setDriveOnOff(1);
+//		setOutput(OUTPUT_DRIVE_ON, 1);
+//		sleep(10);
+//		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
+//		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
+//
+//		if(AxisStatus != SM_OK) {
+//			continue;
+//		}
+//
+//		AxisStatus = smGetParam(AxisName, "StatusBits", &statusBits);
+//		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
+//
+//		if(!(statusBits & STAT_SERVO_READY)) {
+//			continue;
+//		}
+//
+//		break;
+//
+//	}while(1);
+
 
 	//Set ReturnData to position
 	smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_ACTUAL_POSITION);
