@@ -58,10 +58,13 @@ void doState() {
 	case STATE_START:
 		//Start part, and set into feed
 		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX));
-		//TODO Set IO status
+		//Set IO
+		setOutput(OUTPUT_CYCLE_START, 1);
 		//Reset 0 to current location
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_POSITION);
+		//Set IO
+		setOutput(OUTPUT_FEED_FORWARD, 1);
 		//Move
 		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
 		State = STATE_FEED;
@@ -73,7 +76,10 @@ void doState() {
 		//Move Complete?
 		AxisStatus = smGetParam(AxisName, "SimpleStatus", &simpleStatus);
 		if(SIMPLE_STATUS_IDLE == simpleStatus) {
-			//Good, TODO Dwell at all?
+			//Set IO
+			setOutput(OUTPUT_FEED_FORWARD, 0);
+			setOutput(OUTPUT_CYCLE_START, 0);
+			setOutput(OUTPUT_RAPID_RETRACT, 1);
 			//Rapid back
 			smSetParam(AxisName, "VelocityLimit", FEEDRATE_RAPID);
 			AxisStatus = smCommand(AxisName, "ABSTARGET", -BACKLASH_MOVE_AMOUNT);
@@ -97,6 +103,8 @@ void doState() {
 		if(SIMPLE_STATUS_IDLE == simpleStatus) {
 			//Complete
 			//TODO Parts counter?
+			//Set IO
+			setOutput(OUTPUT_RAPID_RETRACT, 1);
 			State = STATE_IDLE;
 		}
 		break;
@@ -116,6 +124,17 @@ void doState() {
 	case STATE_EMERGENCY_RETURN_START:
 		//First, lets stop
 		AxisStatus = smCommand(AxisName, "ABSTARGET", Position);
+		//Set IO //Handled in STATE_FEED
+		//setOutput(OUTPUT_CYCLE_START, 0);
+		//setOutput(OUTPUT_FEED_FORWARD, 0);
+		State = STATE_FEED;
+		break;
+	case STATE_OVERFLOW:
+		//First, lets stop
+		AxisStatus = smCommand(AxisName, "ABSTARGET", Position);
+		//Set IO //Handled in STATE_FEED
+		//setOutput(OUTPUT_CYCLE_START, 0);
+		//setOutput(OUTPUT_FEED_FORWARD, 0);
 		State = STATE_FEED;
 		break;
 	}
