@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include <stdio.h>
 #include "SimpleMotion/simplemotion.h"
 #include "SimpleMotion/simplemotion_private.h"
 #include "SimpleMotion/vsd_cmd.h"
@@ -21,6 +22,7 @@ void updatePosition() {
 	diff = returnValue-previousDrivePosition;
 	Position += diff;
 	previousDrivePosition = returnValue;
+
 }
 
 float withOverride(float value, float override, float min, float max) {
