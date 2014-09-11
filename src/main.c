@@ -16,6 +16,7 @@
 #include "SimpleMotion/simplemotion.h"
 #include "SimpleMotion/simplemotion_private.h"
 #include "SimpleMotion/vsd_cmd.h"
+#include "SimpleMotion/vsd_drive_bits.h"
 
 #include "axis.h"
 #include "gui.h"
@@ -130,14 +131,24 @@ void init() {
 }
 
 void initDrive() {
+	smint32 statusBits;
+
 	//Test Comminications
-	AxisStatus=smCommand(AxisName, "TESTCOMMUNICATION", 0);
+	do {
+		smCloseDevices();
+		sleep(1);
+		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
+	}while(AxisStatus != SM_OK);
+
+
+	do {
+		AxisStatus = smGetParam(AxisName, "StatusBits", &statusBits);
+		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
+	}while(!(statusBits & STAT_SERVO_READY));
 
 	//Set ReturnData to position
 	smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_ACTUAL_POSITION);
 
-	//TODO Remove?
-	//AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
 }
 
 int main(int argc, char** argv) {
