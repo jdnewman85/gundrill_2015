@@ -73,6 +73,9 @@ void doState() {
 		//Reset 0 to current location
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_POSITION);
+		Position = 0;
+		previousDrivePosition = 0;
+		diff = 0;
 		//Move
 		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
 		StatusText = "Feeding";
