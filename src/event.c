@@ -170,24 +170,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	switch(event->keyval) {
 	//Emergency Retract
 	case GDK_KEY_Escape:
-		switch(State) {
-		case STATE_IDLE:
-			//This is fine, ignore
-			break;
-		case STATE_ERROR:
-			//Reset Errors if possible
-			ErrorText = NULL;
-			break;
-		case STATE_STARTUP:
-			//Enable Running
-			State = STATE_IDLE;
-			break;
-		default:
-			//Reset while running, Rapid retract
-			ErrorText = "EMERGENCY RETRACT WHILE RUNNING";
-			State = STATE_EMERGENCY_RETURN_START;
-			break;
-		}
+		handleReset();
 		break;
 	//Nice End
 	case GDK_KEY_F12:
@@ -244,10 +227,6 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	case GDK_KEY_KP_Add:
 		SpindleOverride += SPINDLE_OVERRIDE_INC;
 		if(SpindleOverride > SPINDLE_OVERRIDE_MAX) {SpindleOverride = SPINDLE_OVERRIDE_MAX;}
-		break;
-	case GDK_KEY_r:
-		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
-		ErrorText = NULL;
 		break;
 	case GDK_KEY_z:
 		break;

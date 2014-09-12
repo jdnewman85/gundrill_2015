@@ -30,4 +30,5 @@ extern char* ErrorText;
 void doState();
 void init();
 void initDrive();
+void handleReset();
 #endif //MAIN_H

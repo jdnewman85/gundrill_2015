@@ -51,11 +51,29 @@ int JogDirection = JOG_STOP;
 char* StatusText = "";
 char* ErrorText = NULL;
 
+char ErrorString[100];
+
 void doState() {
 	smint32 simpleStatus;
+	smint32 statusBits;
+	smint32 errorBits;
 
 	switch(State) {
 	case STATE_STARTUP:
+		StatusText = "Startup - Waiting for Drive";
+
+		AxisStatus = smGetParam(AxisName, "StatusBits", &statusBits);
+		if(STAT_SERVO_READY & statusBits) {
+			//Everything up
+
+			//Set ReturnData to position
+			smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_ACTUAL_POSITION);
+
+			State = STATE_STARTUP2;
+		}
+
+		break;
+	case STATE_STARTUP2:
 		StatusText = "Startup - Reset to Enable";
 		break;
 	case STATE_IDLE:
@@ -168,27 +186,62 @@ void doState() {
 		State = STATE_EMERGENCY_RETURN_START;
 	}
 	if(!readInput(INPUT_RAPID_RETRACT)) {
-		switch(State) {
-		case STATE_IDLE:
-			//This is fine, ignore
-			break;
-		case STATE_ERROR:
-			//Reset Errors if possible
-			ErrorText = NULL;
-			break;
-		case STATE_STARTUP:
-			//Enable Running
-			State = STATE_IDLE;
-			break;
-		default:
-			//Reset while running, Rapid retract
-			ErrorText = "EMERGENCY RETRACT WHILE RUNNING";
-			State = STATE_EMERGENCY_RETURN_START;
-			break;
-		}
+		handleReset();
 	}
 
-	//TODO Check drive error bits
+//#define FLT_INVALIDCMD	BV(0)
+//#define FLT_FOLLOWERROR	BV(1)
+//#define FLT_OVERCURRENT BV(2)
+//#define FLT_COMMUNICATION BV(3)
+//#define FLT_ENCODER	BV(4)
+//#define FLT_OVERTEMP BV(5)
+//#define FLT_UNDERVOLTAGE BV(6)
+//#define FLT_OVERVOLTAGE BV(7)
+//#define FLT_PROGRAM BV(8)
+//#define FLT_HARDWARE BV(9)
+//#define FLT_MEM BV(10)
+//#define FLT_INIT BV(11)
+//#define FLT_MOTION BV(12)
+////#define FLT_PHASESEARCH_OVERCURRENT BV(12)
+//#define FLT_RANGE BV(13)
+////to make it necessary to clear faults to activate again
+//#define FLT_PSTAGE_FORCED_OFF BV(14)
+
+	//Drive Error?
+	if(STATE_STARTUP != State) {
+		AxisStatus = smGetParam(AxisName, "FaultBits", &errorBits);
+		if(errorBits || AxisStatus != SM_OK) {
+			sprintf(ErrorString, "Drive Error: %d %d", AxisStatus, (int)errorBits);
+			ErrorText = ErrorString;
+			State = STATE_STARTUP;
+		}
+	}
+}
+
+void handleReset() {
+	switch(State) {
+	case STATE_STARTUP:
+		//Lets reset the drive, incase it didn't come up
+		ErrorText = NULL;
+		initDrive();
+		break;
+	case STATE_IDLE:
+		//This is fine, ignore
+		break;
+	case STATE_ERROR:
+		//Reset Errors if possible
+		ErrorText = NULL;
+		break;
+	case STATE_STARTUP2:
+		//Enable Running
+		State = STATE_IDLE;
+		break;
+	default:
+		//Reset while running, Rapid retract
+		ErrorText = "EMERGENCY RETRACT WHILE RUNNING";
+		State = STATE_EMERGENCY_RETURN_START;
+		break;
+	}
 }
 
 void init() {
@@ -201,58 +254,15 @@ void init() {
 }
 
 void initDrive() {
-	smint32 statusBits;
-
 	//Test Comminications
-	do {
-		setOutput(OUTPUT_DRIVE_ON, 0);
-		sleep(1);
-		setOutput(OUTPUT_DRIVE_ON, 1);
-		sleep(4);
-		smCloseDevices();
-		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
-	}while(AxisStatus != SM_OK);
-
-
-	do {
-		AxisStatus = smGetParam(AxisName, "StatusBits", &statusBits);
-		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
-	}while(!(statusBits & STAT_SERVO_READY));
-
-//	do{
-////		setDriveOnOff(0);
-//		setOutput(OUTPUT_DRIVE_ON, 0);
-//		sleep(1);
-////		setDriveOnOff(1);
-//		setOutput(OUTPUT_DRIVE_ON, 1);
-//		sleep(10);
-//		AxisStatus = smCommand(AxisName, "TESTCOMMUNICATION", 0);
-//		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
-//
-//		if(AxisStatus != SM_OK) {
-//			continue;
-//		}
-//
-//		AxisStatus = smGetParam(AxisName, "StatusBits", &statusBits);
-//		AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
-//
-//		if(!(statusBits & STAT_SERVO_READY)) {
-//			continue;
-//		}
-//
-//		break;
-//
-//	}while(1);
-
-
-	//Set ReturnData to position
-	smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_ACTUAL_POSITION);
+	setOutput(OUTPUT_DRIVE_ON, 0);
+	sleep(1);
+	setOutput(OUTPUT_DRIVE_ON, 1);
+	smCloseDevices();
 
 }
 
 int main(int argc, char** argv) {
-
-
 	//printf("GunDrill Control\n");
 
 	//SigInt Handler
@@ -261,13 +271,11 @@ int main(int argc, char** argv) {
 	//Gtk Init
 	gtk_init(&argc, &argv);
 
-	createDisplay();
-
 	init();
-
 	openIO();
-	
 	initDrive();
+
+	createDisplay();
 
 	//Numeric Entry Key Press Events
 	g_signal_connect(G_OBJECT(numberEntry), "activate", (GCallback)numericInputKeyPressEvent, NULL);
