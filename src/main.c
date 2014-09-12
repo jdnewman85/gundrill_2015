@@ -49,20 +49,20 @@ int JogMode = JOG_MODE_DEFAULT;
 int JogDirection = JOG_STOP;
 
 char* StatusText = "";
-char* ErrorText = "";
+char* ErrorText = NULL;
 
 void doState() {
 	smint32 simpleStatus;
 
 	switch(State) {
 	case STATE_STARTUP:
-		StatusText = "Startup";
+		StatusText = "Startup - Reset to Enable";
 		break;
 	case STATE_IDLE:
 		setOutput(OUTPUT_FEED_FORWARD, 0);
 		setOutput(OUTPUT_CYCLE_START, 0);
 		setOutput(OUTPUT_RAPID_RETRACT, 0);
-		StatusText = "";
+		StatusText = "Idle";
 		break;
 	case STATE_START:
 		//Start part, and set into feed
@@ -184,6 +184,7 @@ void doState() {
 			//Reset while running, Rapid retract
 			ErrorText = "EMERGENCY RETRACT WHILE RUNNING";
 			State = STATE_EMERGENCY_RETURN_START;
+			break;
 		}
 	}
 

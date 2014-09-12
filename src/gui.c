@@ -289,7 +289,11 @@ void updateDisplay() {
 	gtk_label_set_markup(GTK_LABEL(spindleOverrideDisplay), g_markup_printf_escaped(spindleOverrideDisplayMarkup, SpindleOverride));
 
 	//Status
-	sprintf(Status, "Drive: %s", statusString(AxisStatus));
+	if(ErrorText) {
+		sprintf(Status, "Error: %s", ErrorText);
+	}else {
+		sprintf(Status, "Status: %s", StatusText);
+	}
 	gtk_label_set_markup(GTK_LABEL(statusDisplay), g_markup_printf_escaped(statusDisplayMarkup, Status));
 }
 
