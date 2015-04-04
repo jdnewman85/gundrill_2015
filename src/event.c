@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <stdlib.h> //abs()
 #include <gtk/gtk.h>
 #include "SimpleMotion/simplemotion.h"
 #include "SimpleMotion/simplemotion_private.h"
@@ -9,6 +9,7 @@
 #include "main.h"
 #include "event.h"
 #include "aux.h"
+#include "io.h"
 
 gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 	//printf("Set Number!!\n");
@@ -18,7 +19,10 @@ gint numericInputKeyPressEvent(GtkWidget *widget, gpointer userData) {
 	//TODO Scaling
 	switch(InputType) {
 	case INPUT_TYPE_TARGET:
-		Target = (int)(atof(gtk_entry_get_text(GTK_ENTRY(numberEntry)))*CntPerInch);
+		Target = (int)((atof(gtk_entry_get_text(GTK_ENTRY(numberEntry))))*CntPerInch);
+		if(0 < Target) {
+			Target = -Target;
+		}
 		if(Target > TARGET_MAX) {Target = TARGET_MAX;}
 		if(Target < TARGET_MIN) {Target = TARGET_MIN;}
 		break;
@@ -50,11 +54,11 @@ gint jogKey_press_event(GtkWidget *widget, GdkEventKey *event) {
 	case JOG_MODE_100X:
 		switch(event->keyval) {
 		//and a continous jog button has been pushed
-		case GDK_KEY_KP_1:
+		case GDK_KEY_KP_3:
 			//Then jog
 			JogDirection = JOG_FORWARD;
 			break;
-		case GDK_KEY_KP_3:
+		case GDK_KEY_KP_1:
 			JogDirection = JOG_REVERSE;
 			break;
 		
@@ -91,7 +95,9 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 	if(JOG_STOP == JogDirection) {
 		switch(event->keyval) {
 		//Other keys first
+		case GDK_KEY_KP_Enter:
 		case GDK_KEY_Return:
+		case GDK_KEY_KP_Subtract:
 			JogMode = JOG_MODE_NONE;
 			gtk_dialog_response(GTK_DIALOG(jogDialog), 1);
 			break;
@@ -129,7 +135,7 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 		case GDK_KEY_KP_1:
 			//fallthrough
 		case GDK_KEY_KP_3:
-			if(GDK_KEY_KP_1 == event->keyval) {JogDirection = JOG_FORWARD;}else{JogDirection = JOG_REVERSE;}
+			if(GDK_KEY_KP_3 == event->keyval) {JogDirection = JOG_FORWARD;}else{JogDirection = JOG_REVERSE;}
 
 			switch(JogMode) {
 			//Step Jogs
@@ -161,55 +167,96 @@ gint jogKey_release_event(GtkWidget *widget, GdkEventKey *event) {
 			gtk_label_set_markup(GTK_LABEL(jogLabel[i]), g_markup_printf_escaped(jogLabelMarkup[i], "#AAAAAA"));
 		}
 	}
+	//and feed buttons if a mode is selected
+	if(JogMode >= 0) {
+			gtk_label_set_markup(GTK_LABEL(jogLabel[6]), g_markup_printf_escaped(jogLabelMarkup[6], "#000000"));
+			gtk_label_set_markup(GTK_LABEL(jogLabel[8]), g_markup_printf_escaped(jogLabelMarkup[8], "#000000"));
+
+	} else {
+			gtk_label_set_markup(GTK_LABEL(jogLabel[6]), g_markup_printf_escaped(jogLabelMarkup[6], "#AAAAAA"));
+			gtk_label_set_markup(GTK_LABEL(jogLabel[8]), g_markup_printf_escaped(jogLabelMarkup[8], "#AAAAAA"));
+
+	}
 
 	return 0;
 }
 
 gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 	//printf("KEY!: '%s'\n", gdk_keyval_name(event->keyval));
+	if(readInput(INPUT_AUTOMAN)) {
+		//Manual Mode
+		switch(event->keyval) {
+		//Emergency Retract
+		case GDK_KEY_Escape:
+			handleReset();
+			break;
+		//Nice End
+		case GDK_KEY_F12:
+			sigIntHandler();
+			break;
+		//Set Target
+		case GDK_KEY_KP_1:
+			gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Feed Amount"));
+			if(STATE_IDLE == State) {
+				InputType = INPUT_TYPE_TARGET;
+				requestNumber();
+			}
+			break;
+		//Set Feedrate
+		case GDK_KEY_KP_2:
+			gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Feedrate"));
+			if(STATE_IDLE == State) {
+				InputType = INPUT_TYPE_FEEDRATE;
+				requestNumber();
+			}
+			break;
+		//Set Spindle
+		case GDK_KEY_KP_3:
+			gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Spindle Speed"));
+			if(STATE_IDLE == State) {
+				InputType = INPUT_TYPE_SPINDLE;
+				requestNumber();
+			}
+			break;
+		case GDK_KEY_KP_Add:
+			if(STATE_IDLE == State && readInput(INPUT_AUTOMAN)) {
+				showJogDialog();
+			}
+			break;
+		}
+	}else{
+		switch(event->keyval) {
+		//Auto Mode
+		case GDK_KEY_space:
+			if(STATE_IDLE == State) {
+				State = STATE_START;
+			}
+			break;
+		case GDK_KEY_KP_Add:
+			//Ready to Run
+			if(STATE_IDLE == State) {
+				State = STATE_START;
+			}
+			break;
+		case GDK_KEY_KP_Subtract:
+			//Cancel Run
+			if(STATE_START == State) {
+				setOutput(OUTPUT_RAPID_RETRACT, 1); //To Cancel
+				State = STATE_IDLE;
+			}
+			break;
+		case GDK_KEY_KP_Enter:
+		case GDK_KEY_Return:
+			//Run
+			if(STATE_START == State) {
+				State = STATE_START2;
+			}
+			break;
+		}
+	}
+
+	//Either Mode
 	switch(event->keyval) {
-	//Emergency Retract
-	case GDK_KEY_Escape:
-		handleReset();
-		break;
-	//Nice End
-	case GDK_KEY_F12:
-		sigIntHandler();
-		break;
-	//Set Target
-	case GDK_KEY_1:
-		gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Feed Amount"));
-		if(STATE_IDLE == State) {
-			InputType = INPUT_TYPE_TARGET;
-			requestNumber();
-		}
-		break;
-	//Set Feedrate
-	case GDK_KEY_2:
-		gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Feedrate"));
-		if(STATE_IDLE == State) {
-			InputType = INPUT_TYPE_FEEDRATE;
-			requestNumber();
-		}
-		break;
-	//Set Spindle
-	case GDK_KEY_3:
-		gtk_label_set_markup(GTK_LABEL(numberEntryLabel), g_markup_printf_escaped(numberEntryLabelMarkup, "Spindle Speed"));
-		if(STATE_IDLE == State) {
-			InputType = INPUT_TYPE_SPINDLE;
-			requestNumber();
-		}
-		break;
-	case GDK_KEY_j:
-		if(STATE_IDLE == State) {
-			showJogDialog();
-		}
-		break;
-	case GDK_KEY_space:
-		if(STATE_IDLE == State) {
-			State = STATE_START;
-		}
-		break;
 	//Feedrate Override
 	case GDK_KEY_KP_Divide:
 		FeedrateOverride -= FEEDRATE_OVERRIDE_INC;
@@ -220,15 +267,21 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event) {
 		if(FeedrateOverride > FEEDRATE_OVERRIDE_MAX) {FeedrateOverride = FEEDRATE_OVERRIDE_MAX;}
 		break;
 	//Spindle Override
-	case GDK_KEY_KP_Subtract:
-		SpindleOverride -= SPINDLE_OVERRIDE_INC;
-		if(SpindleOverride < SPINDLE_OVERRIDE_MIN) {SpindleOverride = SPINDLE_OVERRIDE_MIN;}
-		break;
-	case GDK_KEY_KP_Add:
-		SpindleOverride += SPINDLE_OVERRIDE_INC;
-		if(SpindleOverride > SPINDLE_OVERRIDE_MAX) {SpindleOverride = SPINDLE_OVERRIDE_MAX;}
-		break;
-	case GDK_KEY_z:
+//	case GDK_KEY_KP_Subtract:
+//		SpindleOverride -= SPINDLE_OVERRIDE_INC;
+//		if(SpindleOverride < SPINDLE_OVERRIDE_MIN) {SpindleOverride = SPINDLE_OVERRIDE_MIN;}
+//		break;
+//	case GDK_KEY_KP_Add:
+//		SpindleOverride += SPINDLE_OVERRIDE_INC;
+//		if(SpindleOverride > SPINDLE_OVERRIDE_MAX) {SpindleOverride = SPINDLE_OVERRIDE_MAX;}
+//		break;
+	case GDK_KEY_KP_0:
+		if(ErrorText && !readInput(INPUT_RAPID_RETRACT)) {
+			//Reset
+			ErrorText = NULL;
+			AxisStatus = smCommand(AxisName, "CLEARFAULTS", 0);
+			State = STATE_IDLE;
+		}
 		break;
 	}
 

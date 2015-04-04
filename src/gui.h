@@ -38,7 +38,7 @@ extern GtkWidget* jogDialog;
 extern GtkWidget* jogDialogFrame;
 extern GtkWidget* jogDialogFrameLabel;
 extern GtkWidget* jogDialogBox;
-extern GtkWidget* jogLabel[6];
+extern GtkWidget* jogLabel[9];
 
 extern gchar* positionDisplayMarkup;
 extern gchar* targetDisplayMarkup;
@@ -49,7 +49,7 @@ extern gchar* spindleDisplayMarkup;
 extern gchar* spindleOverrideDisplayMarkup;
 extern gchar* statusDisplayMarkup;
 extern gchar* numberEntryLabelMarkup;
-extern gchar* jogLabelMarkup[6];
+extern gchar* jogLabelMarkup[9];
 
 extern gint key_release_event(GtkWidget *widget, GdkEventKey *event);
 gboolean updateTimerEvent(gpointer userData);

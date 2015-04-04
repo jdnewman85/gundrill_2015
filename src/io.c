@@ -19,7 +19,12 @@ void setOutput(int output, int state) {
 }
 
 int readInput(int input) {
-	return pifacedigital_read_bit(input, INPUT, piFaceHW_Addr);
+	int result, i;
+	result = 1;
+	for(i = 0; i < DEBOUNCE_LOOPS; i++) {
+		result &= pifacedigital_read_bit(input, INPUT, piFaceHW_Addr); 
+	}
+	return result;
 }
 
 #else //__arm__

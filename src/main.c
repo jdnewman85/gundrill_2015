@@ -53,47 +53,84 @@ char* ErrorText = NULL;
 
 char ErrorString[100];
 
+void debug() {
+	printf("Inputs: ");
+	printf("%d %d %d %d %d %d %d %d\n", readInput(7), readInput(6), readInput(5), readInput(4), readInput(3), readInput(2), readInput(1), readInput(0));
+	printf("State: %d\n", State);
+}
+
 void doState() {
 	smint32 simpleStatus;
 	smint32 statusBits;
 	smint32 errorBits;
 
+	//debug();
+
 	switch(State) {
 	case STATE_STARTUP:
 		StatusText = "Startup - Waiting for Drive";
 
+		smCloseDevices();
 		AxisStatus = smGetParam(AxisName, "StatusBits", &statusBits);
-		if(STAT_SERVO_READY & statusBits) {
-			//Everything up
-
-			//Set ReturnData to position
-			smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_ACTUAL_POSITION);
-
-			State = STATE_STARTUP2;
+//		if(SM_OK != AxisStatus) {
+			if(STAT_SERVO_READY & statusBits) {
+				//Everything up
+	
+				//Set ReturnData to position
+				smSetParam(AxisName, "ReturnDataPayloadType", CAPTURE_ACTUAL_POSITION);
+	
+				State = STATE_STARTUP2;
+//			}
+		} else {
+			initDrive();
 		}
 
 		break;
 	case STATE_STARTUP2:
-		StatusText = "Startup - Reset to Enable";
+		StatusText = "Master Start then Reset";
+		if(!readInput(INPUT_RAPID_RETRACT)) {
+			//Looks good
+			State = STATE_IDLE;
+		}
 		break;
 	case STATE_IDLE:
 		setOutput(OUTPUT_FEED_FORWARD, 0);
 		setOutput(OUTPUT_CYCLE_START, 0);
 		setOutput(OUTPUT_RAPID_RETRACT, 0);
-		StatusText = "Idle";
+		if(!readInput(INPUT_RAPID_RETRACT)) {
+			StatusText = "Idle";
+		} else {
+			StatusText = "Hit Reset";
+		}
+		if(ErrorText) {
+			State = STATE_ERROR;
+		}
+
 		break;
 	case STATE_START:
-		//Start part, and set into feed
-		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX));
-		//Set IO
-		setOutput(OUTPUT_CYCLE_START, 1);
-		setOutput(OUTPUT_FEED_FORWARD, 1);
+		//Wait for confirm, go idle if we loose auto
+		StatusText = "Ready to Run [Enter]";
+		setOutput(OUTPUT_CYCLE_START, 1); //To Cancel
 		//Reset 0 to current location
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_VELOCITY);
 		smSetParam(AxisName, "ControlMode", CONTROL_MODE_POSITION);
 		Position = 0;
 		previousDrivePosition = 0;
 		diff = 0;
+		if(readInput(INPUT_AUTOMAN)) {
+			setOutput(OUTPUT_CYCLE_START, 0);
+			setOutput(OUTPUT_RAPID_RETRACT, 1);
+			State = STATE_IDLE;
+		}
+
+		//Turn on spindle here
+		break;
+	case STATE_START2:
+		//Start part, and set into feed
+		smSetParam(AxisName, "VelocityLimit", (int)withOverride(Feedrate, FeedrateOverride, FEEDRATE_MIN, FEEDRATE_MAX));
+		//Set IO
+		setOutput(OUTPUT_CYCLE_START, 1);
+		setOutput(OUTPUT_FEED_FORWARD, 1);
 		//Move
 		AxisStatus = smCommand(AxisName, "ABSTARGET", Target);
 		StatusText = "Feeding";
@@ -112,7 +149,7 @@ void doState() {
 			setOutput(OUTPUT_RAPID_RETRACT, 1);
 			//Rapid back
 			smSetParam(AxisName, "VelocityLimit", FEEDRATE_RAPID);
-			AxisStatus = smCommand(AxisName, "ABSTARGET", -BACKLASH_MOVE_AMOUNT);
+			AxisStatus = smCommand(AxisName, "ABSTARGET", BACKLASH_MOVE_AMOUNT);
 			StatusText = "Returning";
 			State = STATE_RETURN;
 		}
@@ -160,9 +197,9 @@ void doState() {
 	case STATE_EMERGENCY_RETURN_START:
 		//First, lets stop
 		AxisStatus = smCommand(AxisName, "ABSTARGET", Position);
-		//Set IO //Handled in STATE_FEED
-		//setOutput(OUTPUT_CYCLE_START, 0);
-		//setOutput(OUTPUT_FEED_FORWARD, 0);
+		//Set IO
+		setOutput(OUTPUT_CYCLE_START, 0);
+		setOutput(OUTPUT_FEED_FORWARD, 0);
 		State = STATE_FEED;
 		break;
 	case STATE_OVERFLOW:
@@ -172,22 +209,43 @@ void doState() {
 		setOutput(OUTPUT_FEED_FORWARD, 0);
 		setOutput(OUTPUT_CYCLE_START, 0);
 		setOutput(OUTPUT_RAPID_RETRACT, 0);
-		if(!ErrorText) {
-			State = STATE_IDLE;
-		}
+//		if(!readInput(INPUT_RAPID_RETRACT)) {
+//			//Reset
+//			ErrorText = NULL;
+//			State = STATE_IDLE;
+//		}
 		break;
 	}
 
 
 	//Check IO
-	if(!readInput(INPUT_OVERFLOW)) {
+//	if((!readInput(INPUT_OVERFLOW)) && STATE_FEED == State && NULL == ErrorText) {
+	if(readInput(INPUT_OVERFLOW) && STATE_FEED == State && NULL == ErrorText) {
 		//Rapid retract
-		ErrorText = "OIL TANK FULL";
-		State = STATE_EMERGENCY_RETURN_START;
+		ErrorText = "OIL TANK FULL - Reset then 0";
+		handleReset();
+//		State = STATE_EMERGENCY_RETURN_START;
 	}
-	if(!readInput(INPUT_RAPID_RETRACT)) {
+	if(readInput(INPUT_RAPID_RETRACT)) {
 		handleReset();
 	}
+
+	//Exit jog if we enter auto
+	if(!readInput(INPUT_AUTOMAN) && gtk_widget_is_visible(jogDialog)) {
+		JogMode = JOG_MODE_NONE;
+		gtk_dialog_response(GTK_DIALOG(jogDialog), 1);
+	}
+
+	//If we are running and switch into manual, retract/stop
+//	if(readInput(INPUT_AUTOMAN)) {
+//		if(STATE_FEED == State && NULL == ErrorText) {
+//			//Rapid retract
+//			ErrorText = "MANUAL WHILE RUN!";
+//			State = STATE_EMERGENCY_RETURN_START;
+//		}
+//	}
+	
+
 
 //#define FLT_INVALIDCMD	BV(0)
 //#define FLT_FOLLOWERROR	BV(1)
@@ -213,8 +271,33 @@ void doState() {
 		if(errorBits || AxisStatus != SM_OK) {
 			sprintf(ErrorString, "Drive Error: %d %d", AxisStatus, (int)errorBits);
 			ErrorText = ErrorString;
-			State = STATE_STARTUP;
+			State = STATE_ERROR;
 		}
+	}
+}
+
+void handleResetOLD() {
+	switch(State) {
+	case STATE_START:
+		//Cancel run
+		setOutput(OUTPUT_RAPID_RETRACT, 1); //To Cancel
+		State = STATE_IDLE;
+		break;
+	case STATE_STARTUP:
+	case STATE_EMERGENCY_RETURN_START:
+	case STATE_STARTUP2:
+		//This is fine, ignore
+		break;
+	case STATE_ERROR:
+		//Reset Errors handled in state
+		break;
+	default:
+		//Reset while running, Rapid retract
+		if(NULL == ErrorText) {
+			ErrorText = "EMERGENCY RETRACT - Reset then 0";
+			State = STATE_EMERGENCY_RETURN_START;
+		}
+		break;
 	}
 }
 
@@ -223,23 +306,30 @@ void handleReset() {
 	case STATE_STARTUP:
 		//Lets reset the drive, incase it didn't come up
 		ErrorText = NULL;
-		initDrive();
+		//initDrive();
 		break;
 	case STATE_IDLE:
+	case STATE_EMERGENCY_RETURN_START:
 		//This is fine, ignore
 		break;
 	case STATE_ERROR:
-		//Reset Errors if possible
-		ErrorText = NULL;
+		//Reset Errors handled in state
 		break;
 	case STATE_STARTUP2:
 		//Enable Running
-		State = STATE_IDLE;
+		//State = STATE_IDLE; Just check if we're good here
 		break;
-	default:
+	case STATE_FEED:
 		//Reset while running, Rapid retract
-		ErrorText = "EMERGENCY RETRACT WHILE RUNNING";
+		if(NULL == ErrorText) {
+			ErrorText = "EMERGENCY RETRACT - Reset then 0";
+		}
 		State = STATE_EMERGENCY_RETURN_START;
+		break;
+	case STATE_START:
+		//Cancel run
+		setOutput(OUTPUT_RAPID_RETRACT, 1); //To Cancel
+		State = STATE_IDLE;
 		break;
 	}
 }
@@ -258,6 +348,7 @@ void initDrive() {
 	setOutput(OUTPUT_DRIVE_ON, 0);
 	sleep(1);
 	setOutput(OUTPUT_DRIVE_ON, 1);
+	sleep(15);
 	smCloseDevices();
 
 }
@@ -273,7 +364,7 @@ int main(int argc, char** argv) {
 
 	init();
 	openIO();
-	initDrive();
+	//initDrive();
 
 	createDisplay();
 
